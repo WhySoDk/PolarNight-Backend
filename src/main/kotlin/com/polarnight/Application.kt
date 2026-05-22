@@ -41,6 +41,7 @@ fun Application.module() {
         uploadRoutes()
         autocompleteRoutes()
         mangaRoutes()
+        managementRoutes()
         
         // Serve the Admin Web UI
         staticResources("/", "static")

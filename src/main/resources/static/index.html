@@ -16,6 +16,7 @@
                 <li class="active" data-tab="library">📚 Library</li>
                 <li data-tab="upload">📤 Upload</li>
                 <li data-tab="migration">⚙️ Migration</li>
+                <li data-tab="management">🗂️ Management</li>
             </ul>
         </nav>
 
@@ -24,12 +25,39 @@
             
             <!-- Library View -->
             <section id="library-view" class="view active">
-                <header class="view-header glass-panel">
-                    <h2>Library</h2>
-                    <input type="text" class="search-bar glass-input" placeholder="Search by artist, title, or tag...">
-                </header>
-                <div class="manga-grid" id="manga-grid">
-                    <!-- Dynamic Manga Cards Go Here -->
+                <div class="library-layout">
+                    <!-- Sidebar Tag Checkboxes -->
+                    <aside class="library-sidebar glass-panel">
+                        <h3>Tag Filter</h3>
+                        <div class="advanced-search-helper">
+                            <small>Hold SHIFT to exclude (NOT).</small>
+                        </div>
+                        <div id="tag-checkbox-list" class="tag-checkbox-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                        <button class="btn glass-btn-primary" id="apply-filters-btn">Apply Filters</button>
+                    </aside>
+
+                    <div class="library-main">
+                        <header class="view-header glass-panel">
+                            <h2>Library</h2>
+                            <div class="search-container">
+                                <input type="text" id="advanced-search-bar" class="search-bar glass-input" placeholder="e.g. Action (Romance OR Drama) NOT Horror">
+                                <button class="btn glass-btn" id="search-btn">Search</button>
+                            </div>
+                        </header>
+                        
+                        <div class="manga-grid" id="manga-grid">
+                            <!-- Dynamic Manga Cards Go Here -->
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="pagination-controls glass-panel" id="pagination-controls">
+                            <button class="btn glass-btn" id="prev-page">◀ Prev</button>
+                            <span id="page-indicator">Page 1 of 1</span>
+                            <button class="btn glass-btn" id="next-page">Next ▶</button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -38,10 +66,44 @@
                 <header class="view-header glass-panel">
                     <h2>Upload & Ingestion</h2>
                 </header>
-                
                 <div class="dropzone glass-panel" id="dropzone">
                     <p>Drag & Drop .RAR, .ZIP, or multiple Images here</p>
                     <span>Supports massive bulk uploads</span>
+                </div>
+            </section>
+
+            <!-- Migration View -->
+            <section id="migration-view" class="view">
+                <header class="view-header glass-panel">
+                    <h2>Mass Migration Pipeline</h2>
+                </header>
+                <div class="migration-container glass-panel">
+                    <p>Drop all your old folders into the <strong>/mnt/hdd/manga_pipeline</strong> directory and click the button below. The system will attempt to parse, import, and move them to the final archive automatically.</p>
+                    <button class="btn glass-btn-primary" id="run-migration-btn" style="margin-top: 20px; font-size: 1.1rem;">🚀 Run Mass Migration</button>
+                    
+                    <div class="migration-log" id="migration-log" style="display: none; margin-top: 30px;">
+                        <h3>Migration Results</h3>
+                        <p id="migration-success-count" style="color: #4ade80;">Successfully Migrated: 0</p>
+                        <p style="color: #f87171;">Failed Folders (Please fix their names manually):</p>
+                        <ul id="migration-failed-list" class="failed-list"></ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Management View -->
+            <section id="management-view" class="view">
+                <header class="view-header glass-panel">
+                    <h2>Management</h2>
+                </header>
+                <div class="management-layout">
+                    <div class="management-card glass-panel">
+                        <h3>Tags</h3>
+                        <ul id="manage-tag-list" class="manage-list"></ul>
+                    </div>
+                    <div class="management-card glass-panel">
+                        <h3>Artists & Variants</h3>
+                        <ul id="manage-artist-list" class="manage-list"></ul>
+                    </div>
                 </div>
             </section>
 
@@ -60,25 +122,37 @@
 
             <div class="form-group">
                 <label>Artist</label>
-                <div class="pill-input-container glass-input">
-                    <div id="artist-pill-container" class="pill-container"></div>
-                    <input type="text" id="meta-artist" placeholder="Type artist name..." autocomplete="off">
+                <div id="artist-pill-container" class="pill-container"></div>
+                <div class="pill-input-container">
+                    <input type="text" id="meta-artist" class="glass-input" placeholder="Type artist name..." autocomplete="off">
                 </div>
                 <ul class="autocomplete-dropdown glass-panel" id="artist-autocomplete"></ul>
             </div>
 
             <div class="form-group">
                 <label>Tags</label>
-                <div class="pill-input-container glass-input">
-                    <div id="tag-pill-container" class="pill-container"></div>
-                    <input type="text" id="meta-tags" placeholder="Add a tag..." autocomplete="off">
+                <div id="tag-pill-container" class="pill-container"></div>
+                <div class="pill-input-container">
+                    <input type="text" id="meta-tags" class="glass-input" placeholder="Add a tag..." autocomplete="off">
                 </div>
                 <ul class="autocomplete-dropdown glass-panel" id="tag-autocomplete"></ul>
             </div>
 
             <div class="modal-actions">
                 <button class="btn glass-btn cancel-btn">Cancel</button>
-                <button class="btn glass-btn-primary save-btn">Save to Library</button>
+                <button class="btn glass-btn-primary save-btn" id="save-metadata-btn">Save to Library</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm New Tag Modal -->
+    <div class="modal-overlay" id="new-tag-modal" style="z-index: 150;">
+        <div class="modal glass-panel" style="width: 400px; text-align: center;">
+            <h3>Create New Tag?</h3>
+            <p id="new-tag-message" style="margin: 15px 0; color: var(--text-muted);"></p>
+            <div class="modal-actions" style="justify-content: center;">
+                <button class="btn glass-btn" id="cancel-new-tag-btn">No, let me retype</button>
+                <button class="btn glass-btn-primary" id="confirm-new-tag-btn">Yes, Create Tag</button>
             </div>
         </div>
     </div>

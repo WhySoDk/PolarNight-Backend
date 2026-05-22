@@ -1,76 +1,214 @@
-// UI Navigation
+// Basic Navigation
 document.querySelectorAll('.nav-links li').forEach(link => {
     link.addEventListener('click', () => {
         document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        
         link.classList.add('active');
         document.getElementById(`${link.dataset.tab}-view`).classList.add('active');
+        if(link.dataset.tab === 'library') loadLibrary();
+        if(link.dataset.tab === 'management') loadManagement();
     });
 });
 
-// Drag and Drop Uploads
-const dropzone = document.getElementById('dropzone');
-const modal = document.getElementById('confirmation-modal');
+let currentPage = 1;
+const limit = 24;
 
-dropzone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropzone.style.borderColor = 'white';
-});
-
-dropzone.addEventListener('dragleave', () => {
-    dropzone.style.borderColor = 'var(--primary-blue)';
-});
-
-dropzone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropzone.style.borderColor = 'var(--primary-blue)';
+// Load Library
+function loadLibrary() {
+    const search = document.getElementById('advanced-search-bar').value;
+    // In a full implementation, parsing the boolean string would happen here or in backend.
+    // We will pass the search query straight to the backend if needed, or rely on checkboxes.
     
-    const files = e.dataTransfer.files;
-    if(files.length > 0) {
-        // Here we would upload files to /api/upload/archive or /api/upload/images
-        // For now, trigger the confirmation modal
-        modal.style.display = 'flex';
+    // For simplicity right now, we just pass the page.
+    fetch(`/api/mangas?page=${currentPage}&limit=${limit}`)
+        .then(res => res.json())
+        .then(res => {
+            const grid = document.getElementById('manga-grid');
+            grid.innerHTML = '';
+            res.data.forEach(manga => {
+                grid.innerHTML += `
+                    <div class="manga-card" onclick="openReader(${manga.id})">
+                        <img src="/api/mangas/${manga.id}/thumbnail?type=web" alt="${manga.title}">
+                        <div style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.7); padding:10px;">
+                            <h4 style="font-size:0.9rem">${manga.title}</h4>
+                            <small style="color:var(--text-muted)">${manga.artist || 'Unknown'}</small>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('page-indicator').innerText = `Page ${res.page} of ${res.totalPages}`;
+        });
+}
+
+document.getElementById('prev-page').addEventListener('click', () => { if(currentPage > 1) { currentPage--; loadLibrary(); }});
+document.getElementById('next-page').addEventListener('click', () => { currentPage++; loadLibrary(); });
+
+// Load initial
+loadLibrary();
+
+// Autocomplete Logic with Keyboard Navigation
+function setupAutocomplete(inputId, dropdownId, endpoint, onSelect) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+    let selectedIndex = -1;
+
+    input.addEventListener('input', () => {
+        fetch(`${endpoint}?q=${input.value}`)
+            .then(res => res.json())
+            .then(results => {
+                dropdown.innerHTML = '';
+                if(results.length > 0) {
+                    dropdown.style.display = 'block';
+                    results.forEach((r, idx) => {
+                        const li = document.createElement('li');
+                        li.innerText = r.name;
+                        li.dataset.index = idx;
+                        li.addEventListener('click', () => {
+                            onSelect(r.name);
+                            input.value = '';
+                            dropdown.style.display = 'none';
+                        });
+                        dropdown.appendChild(li);
+                    });
+                } else {
+                    dropdown.style.display = 'none';
+                }
+                selectedIndex = -1;
+            });
+    });
+
+    input.addEventListener('keydown', (e) => {
+        const items = dropdown.querySelectorAll('li');
+        if(e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = (selectedIndex + 1) % items.length;
+            updateSelection(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+            updateSelection(items);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if(selectedIndex > -1 && dropdown.style.display === 'block') {
+                items[selectedIndex].click();
+            } else if (input.value.trim() !== '') {
+                // Confirm new tag logic would be triggered here
+                onSelect(input.value.trim(), true); 
+                input.value = '';
+                dropdown.style.display = 'none';
+            }
+        }
+    });
+
+    function updateSelection(items) {
+        items.forEach((item, idx) => {
+            if(idx === selectedIndex) item.classList.add('selected');
+            else item.classList.remove('selected');
+        });
     }
-});
 
-// Modal Logic
-document.querySelector('.cancel-btn').addEventListener('click', () => {
-    modal.style.display = 'none';
-});
+    document.addEventListener('click', (e) => {
+        if(e.target !== input && e.target !== dropdown) dropdown.style.display = 'none';
+    });
+}
 
-// Pill Management
-function addPill(containerId, text) {
+// Modal Pill Logic
+let selectedArtist = null;
+let selectedTags = [];
+
+function addPill(containerId, text, isArtist = false) {
     const container = document.getElementById(containerId);
+    if(isArtist) container.innerHTML = ''; // Only one artist
+    
     const pill = document.createElement('div');
     pill.className = 'pill';
     pill.innerHTML = `${text} <span>✕</span>`;
-    pill.querySelector('span').addEventListener('click', () => pill.remove());
+    
+    if(isArtist) selectedArtist = text;
+    else if(!selectedTags.includes(text)) selectedTags.push(text);
+    
+    pill.querySelector('span').addEventListener('click', () => {
+        pill.remove();
+        if(isArtist) selectedArtist = null;
+        else selectedTags = selectedTags.filter(t => t !== text);
+    });
+    
     container.appendChild(pill);
 }
 
-document.getElementById('meta-artist').addEventListener('keydown', (e) => {
-    if(e.key === 'Enter' && e.target.value.trim()) {
-        addPill('artist-pill-container', e.target.value.trim());
-        e.target.value = '';
+// Setup the autocompletes
+setupAutocomplete('meta-artist', 'artist-autocomplete', '/api/autocomplete/artists', (name) => {
+    addPill('artist-pill-container', name, true);
+});
+
+setupAutocomplete('meta-tags', 'tag-autocomplete', '/api/autocomplete/tags', (name, isNew) => {
+    if(isNew) {
+        // Safe-guard popup
+        document.getElementById('new-tag-message').innerText = `"${name}" doesn't exist in the database. Are you sure you want to create it?`;
+        document.getElementById('new-tag-modal').style.display = 'flex';
+        
+        document.getElementById('confirm-new-tag-btn').onclick = () => {
+            addPill('tag-pill-container', name, false);
+            document.getElementById('new-tag-modal').style.display = 'none';
+        };
+        document.getElementById('cancel-new-tag-btn').onclick = () => {
+            document.getElementById('new-tag-modal').style.display = 'none';
+        };
+    } else {
+        addPill('tag-pill-container', name, false);
     }
 });
 
-document.getElementById('meta-tags').addEventListener('keydown', (e) => {
-    if(e.key === 'Enter' && e.target.value.trim()) {
-        addPill('tag-pill-container', e.target.value.trim());
-        e.target.value = '';
+// Save Upload Logic
+document.getElementById('save-metadata-btn').addEventListener('click', () => {
+    const title = document.getElementById('meta-title').value;
+    console.log("Saving metadata:", { title, artist: selectedArtist, tags: selectedTags });
+    
+    // Perform API POST here
+    fetch('/api/upload/images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, artist: selectedArtist, tags: selectedTags })
+    }).then(() => {
+        document.getElementById('confirmation-modal').style.display = 'none';
+        loadLibrary();
+    });
+});
+
+// Drag and drop trigger
+const dropzone = document.getElementById('dropzone');
+dropzone.addEventListener('dragover', (e) => { e.preventDefault(); });
+dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if(e.dataTransfer.files.length > 0) {
+        document.getElementById('meta-title').value = '';
+        document.getElementById('artist-pill-container').innerHTML = '';
+        document.getElementById('tag-pill-container').innerHTML = '';
+        selectedTags = []; selectedArtist = null;
+        document.getElementById('confirmation-modal').style.display = 'flex';
     }
+});
+document.querySelector('.cancel-btn').addEventListener('click', () => {
+    document.getElementById('confirmation-modal').style.display = 'none';
+});
+
+// Migration logic
+document.getElementById('run-migration-btn').addEventListener('click', () => {
+    const log = document.getElementById('migration-log');
+    log.style.display = 'block';
+    
+    // Mock call to the pipeline service
+    setTimeout(() => {
+        document.getElementById('migration-success-count').innerText = "Successfully Migrated: 42";
+        const list = document.getElementById('migration-failed-list');
+        list.innerHTML = "<li>[Invalid] Book Name</li><li>Some other folder</li>";
+    }, 2000);
 });
 
 // Reader Logic
 const readerOverlay = document.getElementById('reader-overlay');
 const closeReader = document.querySelector('.close-reader');
-
 function openReader(mangaId) {
     readerOverlay.style.display = 'block';
-    
-    // Fetch pages
     fetch(`/api/mangas/${mangaId}/pages`)
         .then(res => res.json())
         .then(pages => {
@@ -81,24 +219,6 @@ function openReader(mangaId) {
                 img.src = `/stream/${mangaId}/${page}`;
                 container.appendChild(img);
             });
-            
-            // Fetch related for end-of-book
-            fetch(`/api/mangas/${mangaId}/related`)
-                .then(res => res.json())
-                .then(related => {
-                    const grid = document.getElementById('related-grid');
-                    grid.innerHTML = '';
-                    
-                    if(related.sequel) {
-                        grid.innerHTML += `<div><h4>Sequel</h4><img src="/stream/${related.sequel.id}/${related.sequel.cover}" width="100"></div>`;
-                    }
-                    related.otherWorks.forEach(work => {
-                        grid.innerHTML += `<div><img src="/stream/${work.id}/${work.cover}" width="100"></div>`;
-                    });
-                });
         });
 }
-
-closeReader.addEventListener('click', () => {
-    readerOverlay.style.display = 'none';
-});
+closeReader.addEventListener('click', () => { readerOverlay.style.display = 'none'; });

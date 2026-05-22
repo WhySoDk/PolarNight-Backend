@@ -13,17 +13,51 @@ fun Route.mangaRoutes() {
     
     route("/api/mangas") {
         get {
-            val mangas = dbQuery {
-                Manga.all().map { 
-                    mapOf(
-                        "id" to it.id.value,
-                        "title" to it.title,
-                        "artist" to it.artist?.primaryName,
-                        "status" to it.status
-                    )
+            val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
+            val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 24
+            
+            val includeAll = call.request.queryParameters["includeAll"]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+            val includeAny = call.request.queryParameters["includeAny"]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+            val exclude = call.request.queryParameters["exclude"]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+
+            val response = dbQuery {
+                var query = Manga.all()
+                
+                // Note: Exposed doesn't perfectly handle complex M2M boolean filtering fluently without raw SQL,
+                // so we will filter in memory for now. For massive DBs, this should be optimized with raw SQL subqueries.
+                var mangas = query.toList()
+                
+                if (includeAll.isNotEmpty() || includeAny.isNotEmpty() || exclude.isNotEmpty()) {
+                    mangas = mangas.filter { manga ->
+                        val mangaTags = manga.tags.map { it.name.lowercase() }
+                        
+                        val hasAll = includeAll.isEmpty() || includeAll.all { it.lowercase() in mangaTags }
+                        val hasAny = includeAny.isEmpty() || includeAny.any { it.lowercase() in mangaTags }
+                        val hasNone = exclude.isEmpty() || exclude.none { it.lowercase() in mangaTags }
+                        
+                        hasAll && hasAny && hasNone
+                    }
                 }
+                
+                val totalItems = mangas.size
+                val totalPages = Math.ceil(totalItems.toDouble() / limit).toInt()
+                val paginatedMangas = mangas.drop((page - 1) * limit).take(limit)
+
+                mapOf(
+                    "page" to page,
+                    "totalPages" to totalPages,
+                    "totalItems" to totalItems,
+                    "data" to paginatedMangas.map { 
+                        mapOf(
+                            "id" to it.id.value,
+                            "title" to it.title,
+                            "artist" to it.artist?.primaryName,
+                            "status" to it.status
+                        )
+                    }
+                )
             }
-            call.respond(mangas)
+            call.respond(response)
         }
 
         get("/{id}/pages") {
