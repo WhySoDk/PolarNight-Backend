@@ -12,6 +12,8 @@ import io.ktor.server.plugins.cors.routing.*
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import kotlinx.serialization.json.Json
+import com.polarnight.routes.*
+import io.ktor.server.http.content.*
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
@@ -41,6 +43,6 @@ fun Application.module() {
         mangaRoutes()
         
         // Serve the Admin Web UI
-        io.ktor.server.http.content.staticResources("/", "static")
+        staticResources("/", "static")
     }
 }

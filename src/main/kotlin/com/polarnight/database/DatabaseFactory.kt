@@ -3,6 +3,8 @@ package com.polarnight.database
 import com.polarnight.database.models.MangaTags
 import com.polarnight.database.models.Mangas
 import com.polarnight.database.models.Tags
+import com.polarnight.database.models.Artists
+import com.polarnight.database.models.ArtistVariants
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
