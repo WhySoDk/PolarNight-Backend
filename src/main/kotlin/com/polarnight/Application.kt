@@ -20,7 +20,11 @@ fun main() {
         .start(wait = true)
 }
 
+import com.polarnight.database.DatabaseFactory
+
 fun Application.module() {
+    DatabaseFactory.init()
+
     install(CORS) {
         anyHost() // Allows access from Tailscale IP, Local IP, and localhost
         allowHeader(HttpHeaders.ContentType)
