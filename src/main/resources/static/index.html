@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PolarNight Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar glass-panel">
+            <h1 class="logo">PolarNight</h1>
+            <ul class="nav-links">
+                <li class="active" data-tab="library">📚 Library</li>
+                <li data-tab="upload">📤 Upload</li>
+                <li data-tab="migration">⚙️ Migration</li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="content-area">
+            
+            <!-- Library View -->
+            <section id="library-view" class="view active">
+                <header class="view-header glass-panel">
+                    <h2>Library</h2>
+                    <input type="text" class="search-bar glass-input" placeholder="Search by artist, title, or tag...">
+                </header>
+                <div class="manga-grid" id="manga-grid">
+                    <!-- Dynamic Manga Cards Go Here -->
+                </div>
+            </section>
+
+            <!-- Upload / Pipeline View -->
+            <section id="upload-view" class="view">
+                <header class="view-header glass-panel">
+                    <h2>Upload & Ingestion</h2>
+                </header>
+                
+                <div class="dropzone glass-panel" id="dropzone">
+                    <p>Drag & Drop .RAR, .ZIP, or multiple Images here</p>
+                    <span>Supports massive bulk uploads</span>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Confirmation Modal (Glassmorphism) -->
+    <div class="modal-overlay" id="confirmation-modal">
+        <div class="modal glass-panel">
+            <h2>Confirm Metadata</h2>
+            
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="meta-title" class="glass-input">
+            </div>
+
+            <div class="form-group">
+                <label>Artist</label>
+                <div class="pill-input-container glass-input">
+                    <div id="artist-pill-container" class="pill-container"></div>
+                    <input type="text" id="meta-artist" placeholder="Type artist name..." autocomplete="off">
+                </div>
+                <ul class="autocomplete-dropdown glass-panel" id="artist-autocomplete"></ul>
+            </div>
+
+            <div class="form-group">
+                <label>Tags</label>
+                <div class="pill-input-container glass-input">
+                    <div id="tag-pill-container" class="pill-container"></div>
+                    <input type="text" id="meta-tags" placeholder="Add a tag..." autocomplete="off">
+                </div>
+                <ul class="autocomplete-dropdown glass-panel" id="tag-autocomplete"></ul>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn glass-btn cancel-btn">Cancel</button>
+                <button class="btn glass-btn-primary save-btn">Save to Library</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reader Mode Overlay -->
+    <div class="reader-overlay" id="reader-overlay">
+        <button class="close-reader glass-btn">✕ Close</button>
+        <div class="reader-scroll-container" id="reader-scroll-container">
+            <!-- Vertical Scroll Images go here -->
+        </div>
+        <!-- End of Book Section -->
+        <div class="end-of-book glass-panel" id="end-of-book">
+            <h3>More by this Artist</h3>
+            <div class="related-grid" id="related-grid"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

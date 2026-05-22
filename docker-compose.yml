@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  ktor-backend:
+    build: .
+    container_name: polarnight-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount the parent directory so SQLite can create WAL/SHM files safely
+      - ./data:/app/data
+      # Mount the external HDD for heavy archive storage/streaming
+      - /mnt/hdd/manga_archive:/app/manga
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - DB_PATH=/app/data/manga.db
+      - MANGA_DIR=/app/manga
+      - THUMBNAIL_DIR=/app/data/thumbnails
