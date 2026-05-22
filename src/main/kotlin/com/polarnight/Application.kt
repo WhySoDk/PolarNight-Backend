@@ -14,16 +14,16 @@ import io.ktor.http.HttpMethod
 import kotlinx.serialization.json.Json
 import com.polarnight.routes.*
 import io.ktor.server.http.content.*
+import com.polarnight.database.DatabaseFactory
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
         .start(wait = true)
 }
 
-import com.polarnight.database.DatabaseFactory
-
 fun Application.module() {
-    DatabaseFactory.init()
+    val dbPath = System.getenv("DB_PATH") ?: "data/manga.db"
+    DatabaseFactory.init(dbPath)
 
     install(CORS) {
         anyHost() // Allows access from Tailscale IP, Local IP, and localhost
