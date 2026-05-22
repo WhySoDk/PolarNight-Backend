@@ -12,6 +12,8 @@ services:
       - ./data:/app/data
       # Mount the external HDD for heavy archive storage/streaming
       - /mnt/hdd/manga_archive:/app/manga
+      # Mount the pipeline directory for the mass migration script
+      - /mnt/hdd/manga_pipeline:/app/pipeline
     logging:
       driver: "json-file"
       options:
@@ -21,3 +23,4 @@ services:
       - DB_PATH=/app/data/manga.db
       - MANGA_DIR=/app/manga
       - THUMBNAIL_DIR=/app/data/thumbnails
+      - PIPELINE_DIR=/app/pipeline
