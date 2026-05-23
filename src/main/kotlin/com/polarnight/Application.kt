@@ -6,12 +6,10 @@ import io.ktor.server.netty.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
-import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
-import kotlinx.serialization.json.Json
+import io.ktor.serialization.gson.*
 import com.polarnight.routes.*
 import io.ktor.server.http.content.*
 import com.polarnight.database.DatabaseFactory
@@ -35,10 +33,9 @@ fun Application.module() {
     }
 
     install(ContentNegotiation) {
-        json(Json {
-            prettyPrint = true
-            isLenient = true
-        })
+        gson {
+            setPrettyPrinting()
+        }
     }
 
     routing {

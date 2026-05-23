@@ -13,6 +13,15 @@ document.querySelectorAll('.nav-links li').forEach(link => {
 let currentPage = 1;
 const limit = 24;
 
+// Error Toast Logic
+function showError(message) {
+    console.error(message);
+    const toast = document.getElementById('error-toast');
+    toast.innerText = message;
+    toast.classList.add('show');
+    setTimeout(() => { toast.classList.remove('show'); }, 5000);
+}
+
 // Load Library
 function loadLibrary() {
     const search = document.getElementById('advanced-search-bar').value;
@@ -36,7 +45,8 @@ function loadLibrary() {
                     </div>`;
             });
             document.getElementById('page-indicator').innerText = `Page ${res.page} of ${res.totalPages}`;
-        });
+        })
+        .catch(err => showError("Failed to load library: " + err.message));
 }
 
 document.getElementById('prev-page').addEventListener('click', () => { if(currentPage > 1) { currentPage--; loadLibrary(); }});
@@ -73,7 +83,8 @@ function setupAutocomplete(inputId, dropdownId, endpoint, onSelect) {
                     dropdown.style.display = 'none';
                 }
                 selectedIndex = -1;
-            });
+            })
+            .catch(err => showError(`Failed to autocomplete: ${err.message}`));
     });
 
     input.addEventListener('keydown', (e) => {
@@ -153,6 +164,17 @@ setupAutocomplete('meta-tags', 'tag-autocomplete', '/api/autocomplete/tags', (na
         document.getElementById('cancel-new-tag-btn').onclick = () => {
             document.getElementById('new-tag-modal').style.display = 'none';
         };
+        
+        // Enter to accept new tag
+        const enterHandler = (e) => {
+            if (e.key === 'Enter' && document.getElementById('new-tag-modal').style.display === 'flex') {
+                e.preventDefault();
+                document.getElementById('confirm-new-tag-btn').click();
+                document.removeEventListener('keydown', enterHandler);
+            }
+        };
+        document.addEventListener('keydown', enterHandler);
+
     } else {
         addPill('tag-pill-container', name, false);
     }
@@ -168,10 +190,11 @@ document.getElementById('save-metadata-btn').addEventListener('click', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, artist: selectedArtist, tags: selectedTags })
-    }).then(() => {
+    }).then(res => {
+        if(!res.ok) throw new Error("Server returned " + res.status);
         document.getElementById('confirmation-modal').style.display = 'none';
         loadLibrary();
-    });
+    }).catch(err => showError("Failed to save metadata: " + err.message));
 });
 
 // Drag and drop trigger
@@ -219,6 +242,7 @@ function openReader(mangaId) {
                 img.src = `/stream/${mangaId}/${page}`;
                 container.appendChild(img);
             });
-        });
+        })
+        .catch(err => showError("Failed to open reader: " + err.message));
 }
 closeReader.addEventListener('click', () => { readerOverlay.style.display = 'none'; });
