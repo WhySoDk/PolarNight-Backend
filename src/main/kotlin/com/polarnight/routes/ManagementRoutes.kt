@@ -10,6 +10,7 @@ import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.update
+import com.polarnight.services.MigrationService
 
 data class TagRequest(val name: String)
 
@@ -18,6 +19,14 @@ data class VariantRequest(val name: String)
 fun Route.managementRoutes() {
     route("/api/management") {
         
+        // Migration
+        post("/migration/run") {
+            val pipelineDir = System.getenv("PIPELINE_DIR") ?: "/app/pipeline"
+            val finalDir = System.getenv("MANGA_DIR") ?: "/app/manga"
+            val result = MigrationService.runMassMigration(pipelineDir, finalDir)
+            call.respond(result)
+        }
+
         // Tags
         get("/tags") {
             val tags = dbQuery { Tag.all().map { mapOf("id" to it.id.value, "name" to it.name) } }

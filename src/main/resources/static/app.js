@@ -25,11 +25,43 @@ function showError(message) {
 // Load Library
 function loadLibrary() {
     const search = document.getElementById('advanced-search-bar').value;
-    // In a full implementation, parsing the boolean string would happen here or in backend.
-    // We will pass the search query straight to the backend if needed, or rely on checkboxes.
+    let url = `/api/mangas?page=${currentPage}&limit=${limit}`;
     
-    // For simplicity right now, we just pass the page.
-    fetch(`/api/mangas?page=${currentPage}&limit=${limit}`)
+    let includeAll = [];
+    let includeAny = [];
+    let exclude = [];
+    
+    const checkedTags = Array.from(document.querySelectorAll('#tag-checkbox-list input:checked')).map(cb => cb.value);
+    includeAll.push(...checkedTags);
+
+    if (search.trim() !== '') {
+        const notMatches = search.match(/(?:NOT\s+|-)(?:\[(.*?)\]|(\w+))/gi) || [];
+        notMatches.forEach(m => exclude.push(m.replace(/NOT\s+|-|\[|\]/gi, '').trim()));
+        
+        const orMatches = search.match(/\((.*?)\)/g) || [];
+        orMatches.forEach(m => {
+            const tags = m.replace(/\(|\)/g, '').split(/\s+OR\s+/i);
+            tags.forEach(t => includeAny.push(t.replace(/\[|\]/g, '').trim()));
+        });
+        
+        let remaining = search;
+        notMatches.forEach(m => remaining = remaining.replace(m, ''));
+        orMatches.forEach(m => remaining = remaining.replace(m, ''));
+        
+        const andMatches = remaining.match(/\[(.*?)\]|(\w+)/g) || [];
+        andMatches.forEach(m => {
+            const tag = m.replace(/\[|\]/g, '').trim();
+            if (tag.toLowerCase() !== 'and' && tag.toLowerCase() !== 'or' && tag.toLowerCase() !== 'not') {
+                includeAll.push(tag);
+            }
+        });
+    }
+
+    if (includeAll.length > 0) url += `&includeAll=${encodeURIComponent(includeAll.join(','))}`;
+    if (includeAny.length > 0) url += `&includeAny=${encodeURIComponent(includeAny.join(','))}`;
+    if (exclude.length > 0) url += `&exclude=${encodeURIComponent(exclude.join(','))}`;
+
+    fetch(url)
         .then(res => res.json())
         .then(res => {
             const grid = document.getElementById('manga-grid');
@@ -52,8 +84,19 @@ function loadLibrary() {
 document.getElementById('prev-page').addEventListener('click', () => { if(currentPage > 1) { currentPage--; loadLibrary(); }});
 document.getElementById('next-page').addEventListener('click', () => { currentPage++; loadLibrary(); });
 
+document.getElementById('search-btn').addEventListener('click', () => { currentPage = 1; loadLibrary(); });
+document.getElementById('apply-filters-btn').addEventListener('click', () => { currentPage = 1; loadLibrary(); });
+
 // Load initial
 loadLibrary();
+
+// Populate Tag Sidebar
+fetch('/api/management/tags').then(res => res.json()).then(tags => {
+    const list = document.getElementById('tag-checkbox-list');
+    list.innerHTML = tags.map(t => `
+        <label><input type="checkbox" value="${t.name}"> ${t.name}</label><br>
+    `).join('');
+});
 
 // Autocomplete Logic with Keyboard Navigation
 function setupAutocomplete(inputId, dropdownId, endpoint, onSelect) {
@@ -125,6 +168,7 @@ function setupAutocomplete(inputId, dropdownId, endpoint, onSelect) {
 // Modal Pill Logic
 let selectedArtist = null;
 let selectedTags = [];
+let uploadFiles = [];
 
 function addPill(containerId, text, isArtist = false) {
     const container = document.getElementById(containerId);
@@ -183,18 +227,32 @@ setupAutocomplete('meta-tags', 'tag-autocomplete', '/api/autocomplete/tags', (na
 // Save Upload Logic
 document.getElementById('save-metadata-btn').addEventListener('click', () => {
     const title = document.getElementById('meta-title').value;
-    console.log("Saving metadata:", { title, artist: selectedArtist, tags: selectedTags });
     
-    // Perform API POST here
-    fetch('/api/upload/images', {
+    // Using FormData for Multipart Image Upload
+    const formData = new FormData();
+    formData.append('metadata', JSON.stringify({ title, artist: selectedArtist, tags: selectedTags }));
+    uploadFiles.forEach(file => {
+        formData.append('files', file);
+    });
+
+    document.getElementById('save-metadata-btn').innerText = 'Uploading...';
+    
+    const isArchive = uploadFiles.length === 1 && /\.(zip|rar|cbz|7z)$/i.test(uploadFiles[0].name);
+    const endpoint = isArchive ? '/api/upload/archive' : '/api/upload/images';
+    
+    fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, artist: selectedArtist, tags: selectedTags })
+        body: formData
     }).then(res => {
         if(!res.ok) throw new Error("Server returned " + res.status);
+        document.getElementById('save-metadata-btn').innerText = 'Save to Library';
         document.getElementById('confirmation-modal').style.display = 'none';
+        uploadFiles = [];
         loadLibrary();
-    }).catch(err => showError("Failed to save metadata: " + err.message));
+    }).catch(err => {
+        document.getElementById('save-metadata-btn').innerText = 'Save to Library';
+        showError("Failed to save metadata: " + err.message);
+    });
 });
 
 // Drag and drop trigger
@@ -203,6 +261,7 @@ dropzone.addEventListener('dragover', (e) => { e.preventDefault(); });
 dropzone.addEventListener('drop', (e) => {
     e.preventDefault();
     if(e.dataTransfer.files.length > 0) {
+        uploadFiles = Array.from(e.dataTransfer.files);
         document.getElementById('meta-title').value = '';
         document.getElementById('artist-pill-container').innerHTML = '';
         document.getElementById('tag-pill-container').innerHTML = '';
@@ -217,15 +276,40 @@ document.querySelector('.cancel-btn').addEventListener('click', () => {
 // Migration logic
 document.getElementById('run-migration-btn').addEventListener('click', () => {
     const log = document.getElementById('migration-log');
+    const btn = document.getElementById('run-migration-btn');
     log.style.display = 'block';
+    btn.innerText = "Running...";
     
-    // Mock call to the pipeline service
-    setTimeout(() => {
-        document.getElementById('migration-success-count').innerText = "Successfully Migrated: 42";
-        const list = document.getElementById('migration-failed-list');
-        list.innerHTML = "<li>[Invalid] Book Name</li><li>Some other folder</li>";
-    }, 2000);
+    fetch('/api/management/migration/run', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            btn.innerText = "🚀 Run Mass Migration";
+            document.getElementById('migration-success-count').innerText = `Successfully Migrated: ${data.migrated}`;
+            const list = document.getElementById('migration-failed-list');
+            list.innerHTML = data.failed.map(f => `<li>${f}</li>`).join('');
+        })
+        .catch(err => {
+            btn.innerText = "🚀 Run Mass Migration";
+            showError("Migration Failed: " + err.message);
+        });
 });
+
+// Management Logic
+function loadManagement() {
+    fetch('/api/management/tags').then(res => res.json()).then(tags => {
+        const list = document.getElementById('manage-tag-list');
+        list.innerHTML = tags.map(t => `<li>${t.name} <button class="btn glass-btn" onclick="fetch('/api/management/tags/${t.id}', {method:'DELETE'}).then(loadManagement)">Del</button></li>`).join('');
+    });
+    fetch('/api/management/artists').then(res => res.json()).then(artists => {
+        const list = document.getElementById('manage-artist-list');
+        list.innerHTML = artists.map(a => `
+            <li>
+                <strong>${a.primaryName}</strong> <button class="btn glass-btn" onclick="const p = prompt('Variant name:'); if(p) fetch('/api/management/artists/${a.id}/variants', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:p})}).then(loadManagement)">+ Variant</button>
+                <ul>${a.variants.map(v => `<li>${v.name}</li>`).join('')}</ul>
+            </li>
+        `).join('');
+    });
+}
 
 // Reader Logic
 const readerOverlay = document.getElementById('reader-overlay');
@@ -242,6 +326,19 @@ function openReader(mangaId) {
                 img.src = `/stream/${mangaId}/${page}`;
                 container.appendChild(img);
             });
+            // Load Related Works
+            fetch(`/api/mangas/${mangaId}/related`)
+                .then(r => r.json())
+                .then(related => {
+                    const grid = document.getElementById('related-grid');
+                    grid.innerHTML = '';
+                    if (related.sequel) {
+                        grid.innerHTML += `<div class="manga-card" onclick="openReader(${related.sequel.id})"><img src="/api/mangas/${related.sequel.id}/thumbnail?type=web"><h4>Sequel: ${related.sequel.title}</h4></div>`;
+                    }
+                    related.otherWorks.forEach(w => {
+                        grid.innerHTML += `<div class="manga-card" onclick="openReader(${w.id})"><img src="/api/mangas/${w.id}/thumbnail?type=web"><h4>${w.title}</h4></div>`;
+                    });
+                });
         })
         .catch(err => showError("Failed to open reader: " + err.message));
 }
