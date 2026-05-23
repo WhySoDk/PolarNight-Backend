@@ -15,11 +15,19 @@ const limit = 24;
 
 // Error Toast Logic
 function showError(message) {
-    console.error(message);
     const toast = document.getElementById('error-toast');
     toast.innerText = message;
+    toast.style.background = 'rgba(220, 38, 38, 0.9)';
     toast.classList.add('show');
     setTimeout(() => { toast.classList.remove('show'); }, 5000);
+}
+
+function showToast(message) {
+    const toast = document.getElementById('error-toast');
+    toast.innerText = message;
+    toast.style.background = 'rgba(16, 185, 129, 0.9)'; // Green for success
+    toast.classList.add('show');
+    setTimeout(() => { toast.classList.remove('show'); }, 3000);
 }
 
 // Load Library
@@ -500,7 +508,7 @@ deleteBtn.addEventListener('touchend', cancelDeleteHold);
 
 function startDeleteHold(e) {
     e.preventDefault();
-    deleteProgress.style.transition = 'width 3s linear';
+    deleteProgress.style.transition = 'width 1.5s linear';
     deleteProgress.style.width = '100%';
     
     deleteHoldTimer = setTimeout(() => {
@@ -515,7 +523,7 @@ function startDeleteHold(e) {
                 })
                 .catch(err => showError(err.message));
         }
-    }, 3000);
+    }, 1500);
 }
 
 function cancelDeleteHold() {
@@ -659,12 +667,19 @@ document.getElementById('cancel-reorder-btn').addEventListener('click', () => {
 });
 
 document.getElementById('normalize-pages-btn').addEventListener('click', () => {
-    fetch(`/api/mangas/${activeContextMenuMangaId}/pages/normalize`, { method: 'POST' })
-        .then(res => res.json())
-        .then(res => {
-            showToast(`Normalized ${res.count} pages.`);
-            loadReorderGrid(); // Refresh
-        }).catch(err => showError(err.message));
+    const grid = document.getElementById('reorder-grid');
+    const items = Array.from(grid.querySelectorAll('.reorder-item'));
+    
+    // Sort items alphabetically by filename to "normalize" them in the UI
+    items.sort((a, b) => {
+        return a.dataset.filename.localeCompare(b.dataset.filename, undefined, {numeric: true});
+    });
+    
+    // Re-append in sorted order
+    grid.innerHTML = '';
+    items.forEach(item => grid.appendChild(item));
+    
+    showToast('Pages sorted alphabetically. Click "Save New Order" to apply and rename files.');
 });
 
 document.getElementById('save-reorder-btn').addEventListener('click', () => {

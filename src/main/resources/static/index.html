@@ -13,10 +13,10 @@
         <nav class="sidebar glass-panel">
             <h1 class="logo">PolarNight</h1>
             <ul class="nav-links">
-                <li class="active" data-tab="library">📚 Library</li>
-                <li data-tab="upload">📤 Upload</li>
-                <li data-tab="migration">⚙️ Migration</li>
-                <li data-tab="management">🗂️ Management</li>
+                <li class="active" data-tab="library">Library</li>
+                <li data-tab="upload">Upload</li>
+                <li data-tab="migration">Migration</li>
+                <li data-tab="management">Management</li>
             </ul>
         </nav>
 
@@ -84,7 +84,7 @@
                 </header>
                 <div class="migration-container glass-panel">
                     <p>Drop all your old folders into the <strong>/mnt/hdd/manga_pipeline</strong> directory and click the button below. The system will attempt to parse, import, and move them to the final archive automatically.</p>
-                    <button class="btn glass-btn-primary" id="run-migration-btn" style="margin-top: 20px; font-size: 1.1rem;">🚀 Run Mass Migration</button>
+                    <button class="btn glass-btn-primary" id="run-migration-btn" style="margin-top: 20px; font-size: 1.1rem;">Run Mass Migration</button>
                     
                     <div class="migration-log" id="migration-log" style="display: none; margin-top: 30px;">
                         <h3>Migration Results</h3>
@@ -189,21 +189,22 @@
     <!-- Reader Mode Overlay -->
     <div class="reader-overlay" id="reader-overlay">
         <button class="close-reader glass-btn">✕ Close</button>
-        <div class="reader-content" id="reader-content">
-            <!-- Pages injected here -->
+        <div class="reader-scroll-container" id="reader-scroll-container">
+            <!-- Vertical Scroll Images go here -->
         </div>
-        <div id="end-of-book" class="end-of-book glass-panel" style="display: none;">
-            <h3>End of Book</h3>
-            <div id="related-works-grid" class="library-grid"></div>
+        <!-- End of Book Section -->
+        <div class="end-of-book glass-panel" id="end-of-book">
+            <h3>More by this Artist</h3>
+            <div class="related-grid" id="related-grid"></div>
         </div>
     </div>
 
     <!-- Custom Context Menu -->
     <div id="custom-context-menu" class="glass-panel context-menu">
         <ul>
-            <li id="ctx-edit">✏️ Edit Metadata</li>
-            <li id="ctx-reorder">🔄 Modify Page Order</li>
-            <li id="ctx-delete" style="color: #f87171;">🗑️ Delete Book</li>
+            <li id="ctx-edit">Edit Metadata</li>
+            <li id="ctx-reorder">Modify Page Order</li>
+            <li id="ctx-delete" style="color: #f87171;">Delete Book</li>
         </ul>
     </div>
 
@@ -215,7 +216,7 @@
             <div class="modal-actions" style="justify-content: center; flex-direction: column;">
                 <button class="btn glass-btn" id="cancel-delete-btn" style="width: 100%; margin-bottom: 10px;">Cancel</button>
                 <div style="position: relative; width: 100%;">
-                    <button class="btn delete-hold-btn" id="confirm-delete-btn" style="width: 100%;">Hold to Delete (3s)</button>
+                    <button class="btn delete-hold-btn" id="confirm-delete-btn" style="width: 100%;">Hold to Delete (1.5s)</button>
                     <div class="delete-progress-bar" id="delete-progress"></div>
                 </div>
             </div>
@@ -224,14 +225,14 @@
 
     <!-- Edit Metadata Modal (Wider Layout) -->
     <div class="modal-overlay" id="edit-metadata-modal" style="z-index: 150;">
-        <div class="modal glass-panel" style="width: 800px; max-width: 90vw; display: flex; padding: 0;">
+        <div class="modal glass-panel" style="width: 800px; max-width: 90vw; display: flex; padding: 0; height: 80vh;">
             <!-- Left Side: Preview -->
             <div class="edit-preview-container" id="edit-preview-container">
                 <!-- Pages injected here -->
             </div>
             
             <!-- Right Side: Form -->
-            <div style="flex: 1; padding: 30px; display: flex; flex-direction: column;">
+            <div style="flex: 1; padding: 30px; display: flex; flex-direction: column; overflow-y: auto;">
                 <h2>Edit Metadata</h2>
                 <div class="form-group">
                     <label>Title</label>
@@ -268,8 +269,8 @@
     <div class="reader-overlay" id="reorder-pages-overlay" style="z-index: 200;">
         <div class="reorder-header glass-panel">
             <button class="btn glass-btn" id="cancel-reorder-btn">✕ Cancel</button>
-            <button class="btn glass-btn" id="normalize-pages-btn">✨ Normalize Names</button>
-            <button class="btn glass-btn-primary" id="save-reorder-btn">💾 Save New Order</button>
+            <button class="btn glass-btn" id="normalize-pages-btn">Normalize Names</button>
+            <button class="btn glass-btn-primary" id="save-reorder-btn">Save New Order</button>
         </div>
         <div class="reorder-grid" id="reorder-grid">
             <!-- Draggable Pages Injected Here -->
