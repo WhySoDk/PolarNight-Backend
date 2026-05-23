@@ -213,11 +213,12 @@ fun Route.mangaRoutes() {
                 mapOf("id" to it.id.value, "title" to it.title, "cover" to it.coverImage, "artist" to it.artist?.primaryName)
             }
             
+            val otherWorksLimit = if (sequel != null) 4 else 5
             val artistId = manga.artist?.id?.value
             val otherWorks = if (artistId != null) {
                 Manga.find { com.polarnight.database.models.Mangas.artist eq artistId }
                     .filter { it.id.value != id && it.id.value != manga.sequel?.id?.value }
-                    .take(10)
+                    .take(otherWorksLimit)
                     .map { mapOf("id" to it.id.value, "title" to it.title, "cover" to it.coverImage, "artist" to it.artist?.primaryName) }
             } else {
                 emptyList()
