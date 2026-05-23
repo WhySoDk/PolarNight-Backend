@@ -25,7 +25,12 @@ function showError(message) {
 // Load Library
 function loadLibrary() {
     const search = document.getElementById('advanced-search-bar').value;
+    const artistFilter = document.getElementById('library-artist-filter').value;
     let url = `/api/mangas?page=${currentPage}&limit=${limit}`;
+    
+    if (artistFilter) {
+        url += `&artistId=${artistFilter}`;
+    }
     
     let includeAll = [];
     let includeAny = [];
@@ -98,6 +103,15 @@ fetch('/api/management/tags').then(res => res.json()).then(tags => {
     `).join('');
 });
 
+// Populate Artist Filter Sidebar
+fetch('/api/management/artists').then(res => res.json()).then(artists => {
+    const select = document.getElementById('library-artist-filter');
+    artists.forEach(a => {
+        select.innerHTML += `<option value="${a.id}">${a.primaryName}</option>`;
+    });
+});
+document.getElementById('library-artist-filter').addEventListener('change', () => { currentPage = 1; loadLibrary(); });
+
 // Autocomplete Logic with Keyboard Navigation
 function setupAutocomplete(inputId, dropdownId, endpoint, onSelect) {
     const input = document.getElementById(inputId);
@@ -113,7 +127,7 @@ function setupAutocomplete(inputId, dropdownId, endpoint, onSelect) {
                     dropdown.style.display = 'block';
                     results.forEach((r, idx) => {
                         const li = document.createElement('li');
-                        li.innerText = r.name;
+                        li.innerHTML = r.type ? `${r.name} <span class="badge ${r.type.toLowerCase()}">${r.type}</span>` : r.name;
                         li.dataset.index = idx;
                         li.addEventListener('click', () => {
                             onSelect(r.name);
@@ -295,21 +309,71 @@ document.getElementById('run-migration-btn').addEventListener('click', () => {
 });
 
 // Management Logic
+let currentAddingArtistId = null;
+
 function loadManagement() {
     fetch('/api/management/tags').then(res => res.json()).then(tags => {
         const list = document.getElementById('manage-tag-list');
         list.innerHTML = tags.map(t => `<li>${t.name} <button class="btn glass-btn" onclick="fetch('/api/management/tags/${t.id}', {method:'DELETE'}).then(loadManagement)">Del</button></li>`).join('');
     });
     fetch('/api/management/artists').then(res => res.json()).then(artists => {
-        const list = document.getElementById('manage-artist-list');
-        list.innerHTML = artists.map(a => `
-            <li>
-                <strong>${a.primaryName}</strong> <button class="btn glass-btn" onclick="const p = prompt('Variant name:'); if(p) fetch('/api/management/artists/${a.id}/variants', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:p})}).then(loadManagement)">+ Variant</button>
-                <ul>${a.variants.map(v => `<li>${v.name}</li>`).join('')}</ul>
-            </li>
+        const grid = document.getElementById('manage-artist-grid');
+        grid.innerHTML = artists.map(a => `
+            <div class="artist-card">
+                <h4>${a.primaryName}</h4>
+                <ul>
+                    ${a.variants.map(v => `<li>${v.name} <button onclick="fetch('/api/management/artists/variants/${v.id}', {method:'DELETE'}).then(loadManagement)">✕</button></li>`).join('')}
+                </ul>
+                <button class="artist-card-add-btn" onclick="openVariantModal(${a.id})">+ Add Variant</button>
+            </div>
         `).join('');
     });
 }
+
+// Top search to create new artist
+setupAutocomplete('manage-artist-search', 'manage-artist-autocomplete', '/api/autocomplete/artists', (name) => {
+    fetch('/api/management/artists', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ name })
+    }).then(loadManagement);
+});
+
+// Add Variant Modal
+function openVariantModal(artistId) {
+    currentAddingArtistId = artistId;
+    document.getElementById('variant-search-input').value = '';
+    document.getElementById('add-variant-modal').style.display = 'flex';
+}
+
+document.getElementById('cancel-variant-btn').addEventListener('click', () => {
+    document.getElementById('add-variant-modal').style.display = 'none';
+});
+
+document.getElementById('save-variant-btn').addEventListener('click', () => {
+    const variantName = document.getElementById('variant-search-input').value.trim();
+    if (variantName && currentAddingArtistId) {
+        saveVariant(variantName);
+    }
+});
+
+function saveVariant(name) {
+    fetch(`/api/management/artists/${currentAddingArtistId}/variants`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ name })
+    }).then(() => {
+        document.getElementById('add-variant-modal').style.display = 'none';
+        loadManagement();
+    }).catch(err => showError(err.message));
+}
+
+// Modal autocomplete
+setupAutocomplete('variant-search-input', 'variant-autocomplete', '/api/autocomplete/artists', (name) => {
+    if (currentAddingArtistId) {
+        saveVariant(name);
+    }
+});
 
 // Reader Logic
 const readerOverlay = document.getElementById('reader-overlay');

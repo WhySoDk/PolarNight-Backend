@@ -28,6 +28,11 @@
                 <div class="library-layout">
                     <!-- Sidebar Tag Checkboxes -->
                     <aside class="library-sidebar glass-panel">
+                        <h3>Artist Filter</h3>
+                        <select id="library-artist-filter" class="glass-input" style="width: 100%; margin-bottom: 20px;">
+                            <option value="">All Artists</option>
+                        </select>
+
                         <h3>Tag Filter</h3>
                         <div class="advanced-search-helper">
                             <small>Hold SHIFT to exclude (NOT).</small>
@@ -94,15 +99,21 @@
             <section id="management-view" class="view">
                 <header class="view-header glass-panel">
                     <h2>Management</h2>
+                    <div class="search-container" style="max-width: 400px; margin-left: auto;">
+                        <input type="text" id="manage-artist-search" class="search-bar glass-input" placeholder="Search to Add New Artist Card..." autocomplete="off">
+                        <ul class="autocomplete-dropdown glass-panel" id="manage-artist-autocomplete"></ul>
+                    </div>
                 </header>
                 <div class="management-layout">
-                    <div class="management-card glass-panel">
+                    <div class="management-card glass-panel" style="flex: 0 0 300px;">
                         <h3>Tags</h3>
                         <ul id="manage-tag-list" class="manage-list"></ul>
                     </div>
-                    <div class="management-card glass-panel">
+                    <div style="flex: 1;">
                         <h3>Artists & Variants</h3>
-                        <ul id="manage-artist-list" class="manage-list"></ul>
+                        <div id="manage-artist-grid" class="artist-card-grid">
+                            <!-- Artist cards populated here -->
+                        </div>
                     </div>
                 </div>
             </section>
@@ -153,6 +164,24 @@
             <div class="modal-actions" style="justify-content: center;">
                 <button class="btn glass-btn" id="cancel-new-tag-btn">No, let me retype</button>
                 <button class="btn glass-btn-primary" id="confirm-new-tag-btn">Yes, Create Tag</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Variant Modal -->
+    <div class="modal-overlay" id="add-variant-modal" style="z-index: 150;">
+        <div class="modal glass-panel" style="width: 400px;">
+            <h3 id="add-variant-title">Add Variant to Artist</h3>
+            <p style="margin-bottom: 15px; color: var(--text-muted);"><small>Search for an existing artist to merge them, or type a new name to create a text variant.</small></p>
+            
+            <div class="form-group" style="position: relative;">
+                <input type="text" id="variant-search-input" class="glass-input" placeholder="Type variant name..." autocomplete="off">
+                <ul class="autocomplete-dropdown glass-panel" id="variant-autocomplete"></ul>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn glass-btn" id="cancel-variant-btn">Cancel</button>
+                <button class="btn glass-btn-primary" id="save-variant-btn">Add Variant</button>
             </div>
         </div>
     </div>

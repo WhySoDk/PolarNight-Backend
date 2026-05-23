@@ -90,6 +90,21 @@ body {
 .management-card { flex: 1; padding: 20px; }
 .manage-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
 .manage-list li { display: flex; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; }
+.manage-list li button { margin-left: auto; padding: 2px 8px; font-size: 0.8rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; border-radius: 4px; cursor: pointer; }
+.manage-list li button:hover { background: rgba(239, 68, 68, 0.4); }
+
+.artist-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+.artist-card { padding: 15px; border-radius: 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); position: relative; }
+.artist-card h4 { margin-top: 0; margin-bottom: 10px; font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+.artist-card ul { list-style: none; padding-left: 0; margin: 0 0 10px 0; font-size: 0.9rem; color: var(--text-muted); }
+.artist-card ul li { padding: 2px 0; display: flex; justify-content: space-between; align-items: center; }
+.artist-card ul li button { background: transparent; border: none; color: #f87171; cursor: pointer; font-size: 0.8rem; }
+.artist-card-add-btn { background: rgba(59, 130, 246, 0.2); border: 1px dashed rgba(59, 130, 246, 0.5); color: #60a5fa; width: 100%; padding: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+.artist-card-add-btn:hover { background: rgba(59, 130, 246, 0.4); }
+.badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-left: 8px; }
+.badge.main { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+.badge.variant { background: rgba(167, 139, 250, 0.2); color: #c084fc; }
+
 .migration-container { padding: 30px; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .failed-list { list-style: none; text-align: left; margin-top: 10px; max-height: 200px; overflow-y: auto; width: 100%; max-width: 500px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; }
 

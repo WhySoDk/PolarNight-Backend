@@ -15,15 +15,15 @@ fun Route.autocompleteRoutes() {
             val query = call.request.queryParameters["q"] ?: ""
             val results = dbQuery {
                 if (query.isBlank()) {
-                    Artist.all().limit(20).map { mapOf("id" to it.id.value, "name" to it.primaryName) }
+                    Artist.all().limit(20).map { mapOf("id" to it.id.value, "name" to it.primaryName, "type" to "Main") }
                 } else {
-                    // Search in both primary names and variants
-                    val matchedArtists = Artist.find { Artists.primaryName like "%$query%" }.toList()
-                    val matchedVariants = ArtistVariant.find { ArtistVariants.variantName like "%$query%" }.map { it.artist }
+                    val matchedArtists = Artist.find { Artists.primaryName like "%$query%" }
+                        .map { mapOf("id" to it.id.value, "name" to it.primaryName, "type" to "Main") }
                     
-                    (matchedArtists + matchedVariants).distinctBy { it.id.value }
-                        .take(20)
-                        .map { mapOf("id" to it.id.value, "name" to it.primaryName) }
+                    val matchedVariants = ArtistVariant.find { ArtistVariants.variantName like "%$query%" }
+                        .map { mapOf("id" to it.id.value, "name" to it.variantName, "type" to "Variant", "mainArtist" to it.artist.primaryName) }
+                    
+                    (matchedArtists + matchedVariants).take(20)
                 }
             }
             call.respond(results)

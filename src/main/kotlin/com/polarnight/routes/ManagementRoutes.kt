@@ -71,14 +71,47 @@ fun Route.managementRoutes() {
             call.respond(artists)
         }
 
+        post("/artists") {
+            val req = call.receive<VariantRequest>() // We can reuse VariantRequest for name
+            val artist = dbQuery {
+                val existing = Artist.find { Artists.primaryName eq req.name }.firstOrNull()
+                if (existing != null) return@dbQuery existing
+                Artist.new { primaryName = req.name }
+            }
+            call.respond(mapOf("id" to artist.id.value, "primaryName" to artist.primaryName, "variants" to emptyList<Any>()))
+        }
+
         post("/artists/{id}/variants") {
             val artistId = call.parameters["id"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest)
             val req = call.receive<VariantRequest>()
             val variant = dbQuery {
-                val artist = Artist.findById(artistId) ?: return@dbQuery null
-                ArtistVariant.new {
-                    this.artist = artist
-                    this.variantName = req.name
+                val mainArtist = Artist.findById(artistId) ?: return@dbQuery null
+                
+                // If the provided variant name matches an existing standalone artist, merge them
+                val existingArtist = Artist.find { Artists.primaryName eq req.name }.firstOrNull()
+                if (existingArtist != null) {
+                    // Move all mangas from existingArtist to mainArtist
+                    Manga.find { Mangas.artist eq existingArtist.id }.forEach {
+                        it.artist = mainArtist
+                    }
+                    // Move their variants? Or just delete them?
+                    // Let's delete old variants to avoid infinite recursion, or remap them to the new main artist
+                    ArtistVariant.find { ArtistVariants.artist eq existingArtist.id }.forEach {
+                        it.artist = mainArtist
+                    }
+                    existingArtist.delete()
+                }
+
+                // If this name is already a variant for another artist, maybe move it?
+                val existingVariant = ArtistVariant.find { ArtistVariants.variantName eq req.name }.firstOrNull()
+                if (existingVariant != null) {
+                    existingVariant.artist = mainArtist
+                    existingVariant
+                } else {
+                    ArtistVariant.new {
+                        this.artist = mainArtist
+                        this.variantName = req.name
+                    }
                 }
             }
             if (variant != null) call.respond(HttpStatusCode.OK) else call.respond(HttpStatusCode.NotFound)

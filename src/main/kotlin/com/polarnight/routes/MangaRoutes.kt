@@ -19,14 +19,17 @@ fun Route.mangaRoutes() {
             val includeAll = call.request.queryParameters["includeAll"]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
             val includeAny = call.request.queryParameters["includeAny"]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
             val exclude = call.request.queryParameters["exclude"]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+            val artistIdFilter = call.request.queryParameters["artistId"]?.toIntOrNull()
 
             val response = dbQuery {
                 var query = Manga.all()
                 
-                // Note: Exposed doesn't perfectly handle complex M2M boolean filtering fluently without raw SQL,
-                // so we will filter in memory for now. For massive DBs, this should be optimized with raw SQL subqueries.
                 var mangas = query.toList()
                 
+                if (artistIdFilter != null) {
+                    mangas = mangas.filter { it.artist?.id?.value == artistIdFilter }
+                }
+
                 if (includeAll.isNotEmpty() || includeAny.isNotEmpty() || exclude.isNotEmpty()) {
                     mangas = mangas.filter { manga ->
                         val mangaTags = manga.tags.map { it.name.lowercase() }
