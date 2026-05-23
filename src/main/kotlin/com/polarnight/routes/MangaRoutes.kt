@@ -28,12 +28,21 @@ fun Route.mangaRoutes() {
             val exclude = call.request.queryParameters["exclude"]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
             val artistIdFilter = call.request.queryParameters["artistId"]?.toIntOrNull()
             val groupIdFilter = call.request.queryParameters["groupId"]?.toIntOrNull()
+            val searchQuery = call.request.queryParameters["search"]?.trim()
 
             val response = dbQuery {
                 var query = Manga.all()
                 
                 var mangas = query.toList()
                 
+                if (!searchQuery.isNullOrBlank()) {
+                    mangas = mangas.filter { 
+                        it.title.contains(searchQuery, ignoreCase = true) || 
+                        it.artist?.primaryName?.contains(searchQuery, ignoreCase = true) == true ||
+                        it.artist?.group?.name?.contains(searchQuery, ignoreCase = true) == true
+                    }
+                }
+
                 if (artistIdFilter != null) {
                     mangas = mangas.filter { it.artist?.id?.value == artistIdFilter }
                 }
