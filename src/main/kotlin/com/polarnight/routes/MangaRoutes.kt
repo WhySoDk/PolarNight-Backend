@@ -70,6 +70,20 @@ fun Route.mangaRoutes() {
             call.respond(response)
         }
 
+        get("/{id}") {
+            val id = call.parameters["id"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest)
+            val mangaDetails = dbQuery {
+                val manga = Manga.findById(id) ?: return@dbQuery null
+                mapOf(
+                    "id" to manga.id.value,
+                    "title" to manga.title,
+                    "artist" to manga.artist?.primaryName,
+                    "tags" to manga.tags.map { it.name }
+                )
+            } ?: return@get call.respond(HttpStatusCode.NotFound)
+            call.respond(mangaDetails)
+        }
+
         get("/{id}/pages") {
             val id = call.parameters["id"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest)
             val manga = dbQuery { Manga.findById(id) } ?: return@get call.respond(HttpStatusCode.NotFound)

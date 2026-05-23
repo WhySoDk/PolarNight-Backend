@@ -619,6 +619,8 @@ function cancelDeleteHold() {
 // Edit Metadata Logic
 let editSelectedArtist = null;
 let editSelectedTags = new Set();
+let editPreviewPages = [];
+let editPreviewCurrentPage = 0;
 
 document.getElementById('ctx-edit').addEventListener('click', () => {
     if(!activeContextMenuMangaId) return;
@@ -626,8 +628,19 @@ document.getElementById('ctx-edit').addEventListener('click', () => {
     fetch(`/api/mangas/${activeContextMenuMangaId}/pages`)
         .then(res => res.json())
         .then(pages => {
-            const previewContainer = document.getElementById('edit-preview-container');
-            previewContainer.innerHTML = pages.map(p => `<img src="/stream/${activeContextMenuMangaId}/${p}" class="edit-preview-img">`).join('');
+            editPreviewPages = pages;
+            editPreviewCurrentPage = 0;
+            renderEditPreview();
+        });
+        
+    fetch(`/api/mangas/${activeContextMenuMangaId}`)
+        .then(res => res.json())
+        .then(manga => {
+            document.getElementById('edit-meta-title').value = manga.title || activeContextMenuMangaTitle;
+            editSelectedArtist = manga.artist || null;
+            editSelectedTags.clear();
+            if (manga.tags) manga.tags.forEach(t => editSelectedTags.add(t));
+            renderEditPills();
         });
         
     document.getElementById('edit-meta-title').value = activeContextMenuMangaTitle;
@@ -640,6 +653,35 @@ document.getElementById('ctx-edit').addEventListener('click', () => {
 
 document.getElementById('cancel-edit-btn').addEventListener('click', () => {
     document.getElementById('edit-metadata-modal').style.display = 'none';
+});
+
+function renderEditPreview() {
+    const previewContainer = document.getElementById('edit-preview-container');
+    const start = editPreviewCurrentPage * 5;
+    const end = Math.min(start + 5, editPreviewPages.length);
+    const visiblePages = editPreviewPages.slice(start, end);
+    
+    previewContainer.innerHTML = visiblePages.map(p => `<img src="/stream/${activeContextMenuMangaId}/${p}" class="edit-preview-img">`).join('');
+    
+    document.getElementById('edit-prev-preview-btn').disabled = (editPreviewCurrentPage === 0);
+    document.getElementById('edit-next-preview-btn').disabled = (end >= editPreviewPages.length);
+    
+    document.getElementById('edit-prev-preview-btn').style.opacity = (editPreviewCurrentPage === 0) ? '0.5' : '1';
+    document.getElementById('edit-next-preview-btn').style.opacity = (end >= editPreviewPages.length) ? '0.5' : '1';
+}
+
+document.getElementById('edit-prev-preview-btn').addEventListener('click', () => {
+    if (editPreviewCurrentPage > 0) {
+        editPreviewCurrentPage--;
+        renderEditPreview();
+    }
+});
+
+document.getElementById('edit-next-preview-btn').addEventListener('click', () => {
+    if ((editPreviewCurrentPage + 1) * 5 < editPreviewPages.length) {
+        editPreviewCurrentPage++;
+        renderEditPreview();
+    }
 });
 
 function renderEditPills() {
