@@ -65,18 +65,28 @@ function loadLibrary() {
         notMatches.forEach(m => remaining = remaining.replace(m, ''));
         orMatches.forEach(m => remaining = remaining.replace(m, ''));
         
-        const andMatches = remaining.match(/\[(.*?)\]|(\w+)/g) || [];
-        andMatches.forEach(m => {
-            const tag = m.replace(/\[|\]/g, '').trim();
-            if (tag.toLowerCase() !== 'and' && tag.toLowerCase() !== 'or' && tag.toLowerCase() !== 'not') {
-                includeAll.push(tag);
-            }
+        const strictMatches = remaining.match(/\[(.*?)\]/g) || [];
+        strictMatches.forEach(m => {
+            includeAll.push(m.replace(/\[|\]/g, '').trim());
+            remaining = remaining.replace(m, '');
         });
+
+        remaining = remaining.replace(/\b(?:AND|OR|NOT)\b/gi, '').replace(/\s+/g, ' ').trim();
+        if (remaining.length > 0) {
+            url += `&search=${encodeURIComponent(remaining)}`;
+        }
     }
 
     if (includeAll.length > 0) url += `&includeAll=${encodeURIComponent(includeAll.join(','))}`;
     if (includeAny.length > 0) url += `&includeAny=${encodeURIComponent(includeAny.join(','))}`;
     if (exclude.length > 0) url += `&exclude=${encodeURIComponent(exclude.join(','))}`;
+
+    const toggleBtn = document.getElementById('toggle-filter-btn');
+    if (artistFilter || includeAll.length > 0 || includeAny.length > 0 || exclude.length > 0) {
+        toggleBtn.classList.add('filter-active');
+    } else {
+        toggleBtn.classList.remove('filter-active');
+    }
 
     fetch(url)
         .then(res => res.json())

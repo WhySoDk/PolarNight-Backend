@@ -140,6 +140,7 @@ body {
 .pill-search-input { background: transparent; border: none; color: var(--text-main); outline: none; padding: 8px; flex: 1; font-size: 0.95rem; }
 .circle-btn { width: 44px; height: 44px; border-radius: 50%; border: none; background: rgba(255,255,255,0.1); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
 .circle-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
+.circle-btn.filter-active { background: rgba(76, 175, 80, 0.2) !important; color: #4caf50 !important; border: 1px solid #4caf50 !important; box-shadow: 0 0 15px rgba(76, 175, 80, 0.4); }
 .circle-btn.search-submit-btn { width: 34px; height: 34px; }
 .icon { width: 20px; height: 20px; }
 .dropdown-menu { position: absolute; top: 60px; right: 0; padding: 10px; border-radius: 12px; display: none; list-style: none; flex-direction: column; gap: 5px; width: 150px; pointer-events: auto; }
