@@ -169,8 +169,11 @@ body {
 .reader-scroll-container img { width: 100%; height: auto; display: block; }
 .close-reader { position: fixed; top: 20px; left: 20px; z-index: 210; }
 .end-of-book { max-width: 1000px; margin: 50px auto; padding: 30px; text-align: left; }
-.related-grid { display: grid; grid-template-columns: repeat(5, 10vw); justify-content: center; gap: 15px; margin-top: 20px; }
-.related-grid .manga-card { width: 100%; }
+.related-grid { display: grid; grid-template-columns: repeat(5, 10vw); justify-content: center; gap: 10px; margin-top: 20px; }
+.related-manga-card { border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.2s ease; aspect-ratio: 2/3; position: relative; width: 100%; }
+.related-manga-card:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); }
+.related-manga-card img { width: 100%; height: 100%; object-fit: cover; }
+.related-manga-card h4 { position: absolute; bottom: 0; width: 100%; margin: 0; padding: 5px; background: rgba(0,0,0,0.8); text-align: center; font-size: 0.75em; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Responsive */
 @media (max-width: 768px) {

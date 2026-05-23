@@ -210,7 +210,7 @@ fun Route.mangaRoutes() {
             val manga = Manga.findById(id) ?: return@dbQuery null
             
             val sequel = manga.sequel?.let {
-                mapOf("id" to it.id.value, "title" to it.title, "cover" to it.coverImage)
+                mapOf("id" to it.id.value, "title" to it.title, "cover" to it.coverImage, "artist" to it.artist?.primaryName)
             }
             
             val artistId = manga.artist?.id?.value
@@ -218,7 +218,7 @@ fun Route.mangaRoutes() {
                 Manga.find { com.polarnight.database.models.Mangas.artist eq artistId }
                     .filter { it.id.value != id && it.id.value != manga.sequel?.id?.value }
                     .take(10)
-                    .map { mapOf("id" to it.id.value, "title" to it.title, "cover" to it.coverImage) }
+                    .map { mapOf("id" to it.id.value, "title" to it.title, "cover" to it.coverImage, "artist" to it.artist?.primaryName) }
             } else {
                 emptyList()
             }

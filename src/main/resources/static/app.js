@@ -529,10 +529,10 @@ function openReader(mangaId) {
                         ${artistStr ? `<button class="btn btn-primary" onclick="searchArtist('${artistNameToSearch.replace(/'/g, "\\'")}')">Show More</button>` : ''}
                     </div>`;
                     if (related.sequel) {
-                        grid.innerHTML += `<div class="manga-card" onclick="openReader(${related.sequel.id})"><img src="/api/mangas/${related.sequel.id}/thumbnail?type=web"><h4>Sequel: ${related.sequel.title}</h4></div>`;
+                        grid.innerHTML += `<div class="related-manga-card" onclick="openReader(${related.sequel.id})"><img src="/api/mangas/${related.sequel.id}/thumbnail?type=web"><h4>Sequel: ${related.sequel.title}</h4></div>`;
                     }
                     related.otherWorks.forEach(w => {
-                        grid.innerHTML += `<div class="manga-card" onclick="openReader(${w.id})"><img src="/api/mangas/${w.id}/thumbnail?type=web"><h4>${w.title}</h4></div>`;
+                        grid.innerHTML += `<div class="related-manga-card" onclick="openReader(${w.id})"><img src="/api/mangas/${w.id}/thumbnail?type=web"><h4>${w.title}</h4></div>`;
                     });
                 });
         })
