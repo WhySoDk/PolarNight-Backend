@@ -24,7 +24,7 @@ fun Route.autocompleteRoutes() {
                         val matchedGroups = ArtistGroup.find { ArtistGroups.name like "%\$query%" }
                             .map { mapOf("id" to it.id.value, "name" to it.name, "type" to "Group") }
                         
-                        val matchedArtists = Artist.find { Artists.primaryName like "%\$query%" and Artists.group.isNull() }
+                        val matchedArtists = Artist.find { (Artists.primaryName like "%\$query%") and Artists.group.isNull() }
                             .map { mapOf("id" to it.id.value, "name" to it.primaryName, "type" to "Artist") }
                         
                         (matchedGroups + matchedArtists).take(20)
