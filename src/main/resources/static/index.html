@@ -6,7 +6,7 @@
     <title>PolarNight Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Danfo&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/style.css?v=2.6">
+    <link rel="stylesheet" href="/style.css?v=2.7">
 </head>
 <body>
     <!-- Sliding Filter Sidebar -->
@@ -120,20 +120,37 @@
             <section id="management-view" class="view">
                 <header class="view-header">
                     <h2>Management</h2>
-                    <div class="search-container" style="max-width: 400px; margin-left: auto;">
-                        <input type="text" id="manage-artist-search" class="search-bar glass-input" placeholder="Search to Add New Artist Card..." autocomplete="off">
-                        <ul class="autocomplete-dropdown glass-panel" id="manage-artist-autocomplete"></ul>
-                    </div>
                 </header>
                 <div class="management-layout">
                     <div class="management-card glass-panel" style="flex: 0 0 300px;">
                         <h3>Tags</h3>
                         <ul id="manage-tag-list" class="manage-list"></ul>
                     </div>
-                    <div style="flex: 1;">
-                        <h3>Artists & Variants</h3>
-                        <div id="manage-artist-grid" class="artist-card-grid">
-                            <!-- Artist cards populated here -->
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
+                        <div class="glass-panel" style="padding: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0;">Standalone Artists</h3>
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="text" id="new-artist-input" class="glass-input" placeholder="Artist Name...">
+                                    <button class="btn btn-primary" onclick="createNewArtist()">+ Add</button>
+                                </div>
+                            </div>
+                            <div id="standalone-artist-pool" class="artist-pool" ondragover="allowDrop(event)" ondrop="dropToPool(event)">
+                                <!-- Draggable Artist Pills -->
+                            </div>
+                        </div>
+                        
+                        <div class="glass-panel" style="padding: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0;">Artist Groups</h3>
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="text" id="new-group-input" class="glass-input" placeholder="Group Name...">
+                                    <button class="btn btn-primary" onclick="createNewArtistGroup()">+ Create</button>
+                                </div>
+                            </div>
+                            <div id="artist-group-grid" class="artist-group-grid">
+                                <!-- Artist Group Cards containing artists -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -308,6 +325,6 @@
     <!-- Error Toast Notification -->
     <div id="error-toast" class="error-toast glass-panel"></div>
 
-    <script src="/app.js?v=2.6"></script>
+    <script src="/app.js?v=2.7"></script>
 </body>
 </html>

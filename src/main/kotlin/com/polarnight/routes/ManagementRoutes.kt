@@ -57,69 +57,75 @@ fun Route.managementRoutes() {
             call.respond(HttpStatusCode.OK)
         }
 
-        // Artists
+        // Artists & Groups
         get("/artists") {
-            val artists = dbQuery {
-                Artist.all().map { artist ->
+            val data = dbQuery {
+                val allGroups = ArtistGroup.all().map { group ->
                     mapOf(
-                        "id" to artist.id.value,
-                        "primaryName" to artist.primaryName,
-                        "variants" to artist.variants.map { mapOf("id" to it.id.value, "name" to it.variantName) }
+                        "id" to group.id.value,
+                        "name" to group.name,
+                        "artists" to Artist.find { Artists.group eq group.id }.map { 
+                            mapOf("id" to it.id.value, "primaryName" to it.primaryName) 
+                        }
                     )
                 }
+                val standalone = Artist.find { Artists.group.isNull() }.map { artist ->
+                    mapOf("id" to artist.id.value, "primaryName" to artist.primaryName)
+                }
+                mapOf("groups" to allGroups, "standalone" to standalone)
             }
-            call.respond(artists)
+            call.respond(data)
         }
 
         post("/artists") {
-            val req = call.receive<VariantRequest>() // We can reuse VariantRequest for name
+            val req = call.receive<VariantRequest>()
             val artist = dbQuery {
                 val existing = Artist.find { Artists.primaryName eq req.name }.firstOrNull()
                 if (existing != null) return@dbQuery existing
                 Artist.new { primaryName = req.name }
             }
-            call.respond(mapOf("id" to artist.id.value, "primaryName" to artist.primaryName, "variants" to emptyList<Any>()))
+            call.respond(mapOf("id" to artist.id.value, "primaryName" to artist.primaryName))
+        }
+        
+        delete("/artists/{id}") {
+            val id = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(HttpStatusCode.BadRequest)
+            dbQuery { Artists.deleteWhere { Artists.id eq id } }
+            call.respond(HttpStatusCode.OK)
         }
 
-        post("/artists/{id}/variants") {
-            val artistId = call.parameters["id"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest)
+        post("/artist-groups") {
             val req = call.receive<VariantRequest>()
-            val variant = dbQuery {
-                val mainArtist = Artist.findById(artistId) ?: return@dbQuery null
-                
-                // If the provided variant name matches an existing standalone artist, merge them
-                val existingArtist = Artist.find { Artists.primaryName eq req.name }.firstOrNull()
-                if (existingArtist != null) {
-                    // Move all mangas from existingArtist to mainArtist
-                    Manga.find { Mangas.artist eq existingArtist.id }.forEach {
-                        it.artist = mainArtist
-                    }
-                    // Move their variants? Or just delete them?
-                    // Let's delete old variants to avoid infinite recursion, or remap them to the new main artist
-                    ArtistVariant.find { ArtistVariants.artist eq existingArtist.id }.forEach {
-                        it.artist = mainArtist
-                    }
-                    existingArtist.delete()
-                }
-
-                // If this name is already a variant for another artist, maybe move it?
-                val existingVariant = ArtistVariant.find { ArtistVariants.variantName eq req.name }.firstOrNull()
-                if (existingVariant != null) {
-                    existingVariant.artist = mainArtist
-                    existingVariant
+            val group = dbQuery {
+                val existing = ArtistGroup.find { ArtistGroups.name eq req.name }.firstOrNull()
+                if (existing != null) return@dbQuery existing
+                ArtistGroup.new { name = req.name }
+            }
+            call.respond(mapOf("id" to group.id.value, "name" to group.name))
+        }
+        
+        delete("/artist-groups/{id}") {
+            val id = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(HttpStatusCode.BadRequest)
+            dbQuery { 
+                // Disassociate artists first
+                Artist.find { Artists.group eq id }.forEach { it.group = null }
+                ArtistGroups.deleteWhere { ArtistGroups.id eq id }
+            }
+            call.respond(HttpStatusCode.OK)
+        }
+        
+        put("/artists/{id}/group") {
+            val artistId = call.parameters["id"]?.toIntOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest)
+            val req = call.receive<Map<String, Int?>>()
+            val groupId = req["groupId"]
+            dbQuery {
+                val artist = Artist.findById(artistId) ?: return@dbQuery
+                if (groupId == null) {
+                    artist.group = null
                 } else {
-                    ArtistVariant.new {
-                        this.artist = mainArtist
-                        this.variantName = req.name
-                    }
+                    val group = ArtistGroup.findById(groupId) ?: return@dbQuery
+                    artist.group = group
                 }
             }
-            if (variant != null) call.respond(HttpStatusCode.OK) else call.respond(HttpStatusCode.NotFound)
-        }
-
-        delete("/artists/variants/{id}") {
-            val variantId = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(HttpStatusCode.BadRequest)
-            dbQuery { ArtistVariants.deleteWhere { id eq variantId } }
             call.respond(HttpStatusCode.OK)
         }
     }

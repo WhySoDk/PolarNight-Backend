@@ -13,17 +13,31 @@ fun Route.autocompleteRoutes() {
         
         get("/artists") {
             val query = call.request.queryParameters["q"] ?: ""
+            val filterMode = call.request.queryParameters["filterMode"] == "true"
             val results = dbQuery {
-                if (query.isBlank()) {
-                    Artist.all().limit(20).map { mapOf("id" to it.id.value, "name" to it.primaryName, "type" to "Main") }
+                if (filterMode) {
+                    if (query.isBlank()) {
+                        val groups = ArtistGroup.all().limit(10).map { mapOf("id" to it.id.value, "name" to it.name, "type" to "Group") }
+                        val artists = Artist.find { Artists.group.isNull() }.limit(10).map { mapOf("id" to it.id.value, "name" to it.primaryName, "type" to "Artist") }
+                        (groups + artists)
+                    } else {
+                        val matchedGroups = ArtistGroup.find { ArtistGroups.name like "%\$query%" }
+                            .map { mapOf("id" to it.id.value, "name" to it.name, "type" to "Group") }
+                        
+                        val matchedArtists = Artist.find { Artists.primaryName like "%\$query%" and Artists.group.isNull() }
+                            .map { mapOf("id" to it.id.value, "name" to it.primaryName, "type" to "Artist") }
+                        
+                        (matchedGroups + matchedArtists).take(20)
+                    }
                 } else {
-                    val matchedArtists = Artist.find { Artists.primaryName like "%$query%" }
-                        .map { mapOf("id" to it.id.value, "name" to it.primaryName, "type" to "Main") }
-                    
-                    val matchedVariants = ArtistVariant.find { ArtistVariants.variantName like "%$query%" }
-                        .map { mapOf("id" to it.id.value, "name" to it.variantName, "type" to "Variant", "mainArtist" to it.artist.primaryName) }
-                    
-                    (matchedArtists + matchedVariants).take(20)
+                    // Normal mode: return all artists (grouped and standalone)
+                    if (query.isBlank()) {
+                        Artist.all().limit(20).map { mapOf("id" to it.id.value, "name" to it.primaryName, "type" to "Artist") }
+                    } else {
+                        Artist.find { Artists.primaryName like "%\$query%" }
+                            .take(20)
+                            .map { mapOf("id" to it.id.value, "name" to it.primaryName, "type" to "Artist") }
+                    }
                 }
             }
             call.respond(results)

@@ -86,6 +86,57 @@ body {
 @keyframes shine { to { background-position: 200% center; } }
 .pill-search-container { display: flex; align-items: center; border-radius: 30px; padding: 4px 10px; width: 100%; max-width: 400px; transition: border-color 0.3s; }
 .pill-search-container:focus-within { border-color: var(--primary-blue); }
+.pill-input-container input {
+    border: none;
+    background: transparent;
+    color: var(--text);
+    outline: none;
+    font-size: 0.9rem;
+}
+
+.artist-pool {
+    min-height: 100px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+    border: 2px dashed rgba(255,255,255,0.1);
+    border-radius: 8px;
+}
+
+.artist-group-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.artist-group-card {
+    padding: 15px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    background: rgba(0,0,0,0.2);
+}
+
+.artist-group-dropzone {
+    min-height: 80px;
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+    border: 2px dashed rgba(255,255,255,0.1);
+    border-radius: 8px;
+}
+
+.draggable-pill {
+    cursor: grab;
+    transition: transform 0.2s;
+}
+
+.draggable-pill:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+}
 .pill-search-input { background: transparent; border: none; color: var(--text-main); outline: none; padding: 8px; flex: 1; font-size: 0.95rem; }
 .circle-btn { width: 44px; height: 44px; border-radius: 50%; border: none; background: rgba(255,255,255,0.1); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
 .circle-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }

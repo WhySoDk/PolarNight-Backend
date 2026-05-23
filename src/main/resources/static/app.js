@@ -37,7 +37,11 @@ function loadLibrary() {
     let url = `/api/mangas?page=${currentPage}&limit=${limit}`;
     
     if (artistFilter) {
-        url += `&artistId=${artistFilter}`;
+        if (artistFilter.startsWith('group_')) {
+            url += `&groupId=${artistFilter.split('_')[1]}`;
+        } else {
+            url += `&artistId=${artistFilter.split('_')[1]}`;
+        }
     }
     
     let includeAll = [];
@@ -129,11 +133,14 @@ fetch('/api/management/tags').then(res => res.json()).then(tags => {
 
 // Populate Artist Filter Sidebar
 window.globalArtists = [];
-fetch('/api/management/artists').then(res => res.json()).then(artists => {
-    window.globalArtists = artists;
+fetch('/api/management/artists').then(res => res.json()).then(data => {
+    window.globalArtists = data.standalone.concat(data.groups.flatMap(g => g.artists));
     const select = document.getElementById('library-artist-filter');
-    artists.forEach(a => {
-        select.innerHTML += `<option value="${a.id}">${a.primaryName}</option>`;
+    data.groups.forEach(g => {
+        select.innerHTML += `<option value="group_${g.id}">[Group] ${g.name}</option>`;
+    });
+    data.standalone.forEach(a => {
+        select.innerHTML += `<option value="artist_${a.id}">${a.primaryName}</option>`;
     });
     select.addEventListener('change', () => { currentPage = 1; loadLibrary(); });
 });
@@ -428,63 +435,110 @@ document.getElementById('run-migration-btn').addEventListener('click', () => {
 });
 
 // Management Logic
-let currentAddingArtistId = null;
-
 function loadManagement() {
     fetch('/api/management/tags').then(res => res.json()).then(tags => {
         const list = document.getElementById('manage-tag-list');
         list.innerHTML = tags.map(t => `<li>${t.name} <button class="btn glass-btn" onclick="fetch('/api/management/tags/${t.id}', {method:'DELETE'}).then(loadManagement)">Del</button></li>`).join('');
     });
-    fetch('/api/management/artists').then(res => res.json()).then(artists => {
-        const grid = document.getElementById('manage-artist-grid');
-        grid.innerHTML = artists.map(a => `
-            <div class="artist-card">
-                <h4>${a.primaryName}</h4>
-                <ul>
-                    ${a.variants.map(v => `<li>${v.name} <button onclick="fetch('/api/management/artists/variants/${v.id}', {method:'DELETE'}).then(loadManagement)">✕</button></li>`).join('')}
-                </ul>
-                <button class="artist-card-add-btn" onclick="openVariantModal(${a.id})">+ Add Variant</button>
+    
+    fetch('/api/management/artists').then(res => res.json()).then(data => {
+        const pool = document.getElementById('standalone-artist-pool');
+        pool.innerHTML = data.standalone.map(a => `
+            <div class="pill draggable-pill" draggable="true" ondragstart="dragArtist(event, ${a.id})" id="artist-pill-${a.id}">
+                ${a.primaryName} <span onclick="deleteArtist(${a.id})">✕</span>
+            </div>
+        `).join('');
+
+        const groupGrid = document.getElementById('artist-group-grid');
+        groupGrid.innerHTML = data.groups.map(g => `
+            <div class="artist-group-card">
+                <div style="display: flex; justify-content: space-between;">
+                    <h4 style="margin: 0;">${g.name}</h4>
+                    <button class="btn glass-btn" onclick="deleteArtistGroup(${g.id})">Del</button>
+                </div>
+                <div class="artist-group-dropzone" ondragover="allowDrop(event)" ondrop="dropToGroup(event, ${g.id})">
+                    ${g.artists.map(a => `
+                        <div class="pill draggable-pill" draggable="true" ondragstart="dragArtist(event, ${a.id})" id="artist-pill-${a.id}">
+                            ${a.primaryName} <span onclick="deleteArtist(${a.id})">✕</span>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
         `).join('');
     });
 }
 
-// Top search to create new artist
-setupAutocomplete('manage-artist-search', 'manage-artist-autocomplete', '/api/autocomplete/artists', (name) => {
+function createNewArtist() {
+    const input = document.getElementById('new-artist-input');
+    const name = input.value.trim();
+    if (!name) return;
     fetch('/api/management/artists', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ name })
-    }).then(loadManagement);
-});
-
-// Add Variant Modal
-function openVariantModal(artistId) {
-    currentAddingArtistId = artistId;
-    document.getElementById('variant-search-input').value = '';
-    document.getElementById('add-variant-modal').style.display = 'flex';
+    }).then(() => {
+        input.value = '';
+        loadManagement();
+    });
 }
 
-document.getElementById('cancel-variant-btn').addEventListener('click', () => {
-    document.getElementById('add-variant-modal').style.display = 'none';
-});
-
-document.getElementById('save-variant-btn').addEventListener('click', () => {
-    const variantName = document.getElementById('variant-search-input').value.trim();
-    if (variantName && currentAddingArtistId) {
-        saveVariant(variantName);
-    }
-});
-
-function saveVariant(name) {
-    fetch(`/api/management/artists/${currentAddingArtistId}/variants`, {
+function createNewArtistGroup() {
+    const input = document.getElementById('new-group-input');
+    const name = input.value.trim();
+    if (!name) return;
+    fetch('/api/management/artist-groups', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ name })
     }).then(() => {
-        document.getElementById('add-variant-modal').style.display = 'none';
+        input.value = '';
         loadManagement();
-    }).catch(err => showError(err.message));
+    });
+}
+
+function deleteArtist(id) {
+    if(confirm('Are you sure you want to delete this artist?')) {
+        fetch(`/api/management/artists/${id}`, { method: 'DELETE' }).then(loadManagement);
+    }
+}
+
+function deleteArtistGroup(id) {
+    if(confirm('Are you sure you want to delete this artist group? All associated artists will be moved to the standalone pool.')) {
+        fetch(`/api/management/artist-groups/${id}`, { method: 'DELETE' }).then(loadManagement);
+    }
+}
+
+// Drag and Drop Logic
+function dragArtist(e, id) {
+    e.dataTransfer.setData('artistId', id);
+}
+
+function allowDrop(e) {
+    e.preventDefault();
+}
+
+function dropToPool(e) {
+    e.preventDefault();
+    const artistId = e.dataTransfer.getData('artistId');
+    if (artistId) {
+        updateArtistGroup(artistId, null);
+    }
+}
+
+function dropToGroup(e, groupId) {
+    e.preventDefault();
+    const artistId = e.dataTransfer.getData('artistId');
+    if (artistId) {
+        updateArtistGroup(artistId, groupId);
+    }
+}
+
+function updateArtistGroup(artistId, groupId) {
+    fetch(`/api/management/artists/${artistId}/group`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupId })
+    }).then(loadManagement);
 }
 
 // Modal autocomplete
@@ -693,6 +747,7 @@ function renderEditPills() {
 }
 
 setupAutocomplete('edit-meta-artist', 'edit-artist-autocomplete', '/api/autocomplete/artists', (name) => {
+    document.getElementById('edit-meta-artist').value = '';
     editSelectedArtist = name;
     renderEditPills();
 });

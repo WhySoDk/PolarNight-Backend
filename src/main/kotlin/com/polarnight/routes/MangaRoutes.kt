@@ -27,6 +27,7 @@ fun Route.mangaRoutes() {
             val includeAny = call.request.queryParameters["includeAny"]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
             val exclude = call.request.queryParameters["exclude"]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
             val artistIdFilter = call.request.queryParameters["artistId"]?.toIntOrNull()
+            val groupIdFilter = call.request.queryParameters["groupId"]?.toIntOrNull()
 
             val response = dbQuery {
                 var query = Manga.all()
@@ -36,10 +37,15 @@ fun Route.mangaRoutes() {
                 if (artistIdFilter != null) {
                     mangas = mangas.filter { it.artist?.id?.value == artistIdFilter }
                 }
+                if (groupIdFilter != null) {
+                    mangas = mangas.filter { it.artist?.group?.id?.value == groupIdFilter }
+                }
 
                 if (includeAll.isNotEmpty() || includeAny.isNotEmpty() || exclude.isNotEmpty()) {
                     mangas = mangas.filter { manga ->
-                        val mangaTags = manga.tags.map { it.name.lowercase() }
+                        val mangaTags = manga.tags.map { it.name.lowercase() }.toMutableList()
+                        manga.artist?.primaryName?.let { mangaTags.add(it.lowercase()) }
+                        manga.artist?.group?.name?.let { mangaTags.add(it.lowercase()) }
                         
                         val hasAll = includeAll.isEmpty() || includeAll.all { it.lowercase() in mangaTags }
                         val hasAny = includeAny.isEmpty() || includeAny.any { it.lowercase() in mangaTags }
@@ -78,6 +84,7 @@ fun Route.mangaRoutes() {
                     "id" to manga.id.value,
                     "title" to manga.title,
                     "artist" to manga.artist?.primaryName,
+                    "groupName" to manga.artist?.group?.name,
                     "tags" to manga.tags.map { it.name }
                 )
             } ?: return@get call.respond(HttpStatusCode.NotFound)
@@ -224,12 +231,18 @@ fun Route.mangaRoutes() {
             val manga = Manga.findById(id) ?: return@dbQuery null
             
             val sequel = manga.sequel?.let {
-                mapOf("id" to it.id.value, "title" to it.title, "cover" to it.coverImage, "artist" to it.artist?.primaryName)
+                mapOf("id" to it.id.value, "title" to it.title, "cover" to it.coverImage, "artist" to (it.artist?.group?.name ?: it.artist?.primaryName))
             }
             
             val otherWorksLimit = if (sequel != null) 4 else 5
             val artistId = manga.artist?.id?.value
-            val otherWorks = if (artistId != null) {
+            val groupId = manga.artist?.group?.id?.value
+            val otherWorks = if (groupId != null) {
+                Manga.all()
+                    .filter { it.artist?.group?.id?.value == groupId && it.id.value != id && it.id.value != manga.sequel?.id?.value }
+                    .take(otherWorksLimit)
+                    .map { mapOf("id" to it.id.value, "title" to it.title, "cover" to it.coverImage, "artist" to (it.artist?.group?.name ?: it.artist?.primaryName)) }
+            } else if (artistId != null) {
                 Manga.find { com.polarnight.database.models.Mangas.artist eq artistId }
                     .filter { it.id.value != id && it.id.value != manga.sequel?.id?.value }
                     .take(otherWorksLimit)
