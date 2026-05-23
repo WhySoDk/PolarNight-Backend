@@ -67,7 +67,7 @@ fun Route.mangaRoutes() {
                         mapOf(
                             "id" to it.id.value,
                             "title" to it.title,
-                            "artist" to it.artist?.primaryName,
+                            "artist" to (it.artist?.group?.name ?: it.artist?.primaryName),
                             "status" to it.status
                         )
                     }
