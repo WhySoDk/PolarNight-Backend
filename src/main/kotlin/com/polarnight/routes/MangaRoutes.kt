@@ -1,13 +1,20 @@
 package com.polarnight.routes
 
 import com.polarnight.database.DatabaseFactory.dbQuery
-import com.polarnight.database.models.Manga
+import com.polarnight.database.models.*
 import com.polarnight.services.ThumbnailService
+import com.polarnight.services.PageNormalizer
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.io.File
+import java.util.UUID
+import org.jetbrains.exposed.sql.SizedCollection
+
+data class MangaUpdateRequest(val title: String, val artist: String?, val tags: List<String>)
+data class PageReorderRequest(val newOrder: List<String>)
 
 fun Route.mangaRoutes() {
     
@@ -92,6 +99,86 @@ fun Route.mangaRoutes() {
             } else {
                 call.respond(HttpStatusCode.NotFound)
             }
+        }
+
+        put("/{id}") {
+            val id = call.parameters["id"]?.toIntOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest)
+            val req = call.receive<MangaUpdateRequest>()
+            dbQuery {
+                val manga = Manga.findById(id) ?: return@dbQuery
+                
+                var resolvedArtist: Artist? = null
+                if (!req.artist.isNullOrBlank()) {
+                    val name = req.artist.trim()
+                    resolvedArtist = Artist.find { Artists.primaryName eq name }.firstOrNull()
+                    if (resolvedArtist == null) {
+                        val variant = ArtistVariant.find { ArtistVariants.variantName eq name }.firstOrNull()
+                        resolvedArtist = variant?.artist ?: Artist.new { primaryName = name }
+                    }
+                }
+
+                val resolvedTags = req.tags.map { tagName ->
+                    val name = tagName.trim()
+                    Tag.find { Tags.name eq name }.firstOrNull() ?: Tag.new { this.name = name }
+                }
+
+                manga.title = req.title.trim()
+                manga.artist = resolvedArtist
+                manga.tags = SizedCollection(resolvedTags)
+            }
+            call.respond(HttpStatusCode.OK)
+        }
+
+        delete("/{id}") {
+            val id = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(HttpStatusCode.BadRequest)
+            dbQuery {
+                val manga = Manga.findById(id) ?: return@dbQuery
+                val folder = File(manga.folderPath)
+                if (folder.exists()) {
+                    folder.deleteRecursively()
+                }
+                manga.delete()
+            }
+            call.respond(HttpStatusCode.OK)
+        }
+
+        post("/{id}/pages/normalize") {
+            val id = call.parameters["id"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest)
+            val mangaFolderPath = dbQuery { Manga.findById(id)?.folderPath } ?: return@post call.respond(HttpStatusCode.NotFound)
+            val count = PageNormalizer.normalizePages(mangaFolderPath)
+            call.respond(mapOf("status" to "success", "count" to count))
+        }
+
+        post("/{id}/pages/reorder") {
+            val id = call.parameters["id"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest)
+            val req = call.receive<PageReorderRequest>()
+            val mangaFolderPath = dbQuery { Manga.findById(id)?.folderPath } ?: return@post call.respond(HttpStatusCode.NotFound)
+            
+            val folder = File(mangaFolderPath)
+            if (!folder.exists() || !folder.isDirectory) {
+                return@post call.respond(HttpStatusCode.NotFound)
+            }
+
+            // Temp rename to avoid collision
+            val tempMapping = req.newOrder.mapIndexed { index, oldName ->
+                val ext = File(oldName).extension
+                val tempFile = File(folder, "temp_${UUID.randomUUID()}.$ext")
+                val originalFile = File(folder, oldName)
+                if (originalFile.exists()) {
+                    originalFile.renameTo(tempFile)
+                }
+                Pair(tempFile, index + 1)
+            }
+
+            // Final rename to 0001.jpg etc
+            tempMapping.forEach { (tempFile, newIndex) ->
+                if (tempFile.exists()) {
+                    val newName = String.format("%04d.%s", newIndex, tempFile.extension)
+                    tempFile.renameTo(File(folder, newName))
+                }
+            }
+
+            call.respond(HttpStatusCode.OK)
         }
     }
 

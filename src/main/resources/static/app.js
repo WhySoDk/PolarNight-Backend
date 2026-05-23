@@ -73,7 +73,7 @@ function loadLibrary() {
             grid.innerHTML = '';
             res.data.forEach(manga => {
                 grid.innerHTML += `
-                    <div class="manga-card" onclick="openReader(${manga.id})">
+                    <div class="manga-card" onclick="openReader(${manga.id})" oncontextmenu="showContextMenu(event, ${manga.id}, \`${manga.title.replace(/`/g, '\\`')}\`)">
                         <img src="/api/mangas/${manga.id}/thumbnail?type=web" alt="${manga.title}">
                         <div style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.7); padding:10px;">
                             <h4 style="font-size:0.9rem">${manga.title}</h4>
@@ -179,29 +179,67 @@ function setupAutocomplete(inputId, dropdownId, endpoint, onSelect) {
     });
 }
 
-// Modal Pill Logic
+// State for Add Modal
 let selectedArtist = null;
-let selectedTags = [];
+let selectedTags = new Set();
 let uploadFiles = [];
 
-function addPill(containerId, text, isArtist = false) {
-    const container = document.getElementById(containerId);
-    if(isArtist) container.innerHTML = ''; // Only one artist
-    
-    const pill = document.createElement('div');
-    pill.className = 'pill';
-    pill.innerHTML = `${text} <span>✕</span>`;
-    
-    if(isArtist) selectedArtist = text;
-    else if(!selectedTags.includes(text)) selectedTags.push(text);
-    
-    pill.querySelector('span').addEventListener('click', () => {
-        pill.remove();
-        if(isArtist) selectedArtist = null;
-        else selectedTags = selectedTags.filter(t => t !== text);
+// Validation Logic
+function validateUploadModal() {
+    const title = document.getElementById('meta-title').value.trim();
+    const btn = document.getElementById('save-metadata-btn');
+    if (title && selectedArtist) {
+        btn.disabled = false;
+        btn.classList.remove('disabled');
+    } else {
+        btn.disabled = true;
+        btn.classList.add('disabled');
+    }
+}
+
+document.getElementById('meta-title').addEventListener('input', validateUploadModal);
+
+// Modal Pill Logic
+function renderArtistPill() {
+    const container = document.getElementById('artist-pill-container');
+    container.innerHTML = '';
+    if (selectedArtist) {
+        const pill = document.createElement('div');
+        pill.className = 'pill';
+        pill.innerHTML = `${selectedArtist} <span>✕</span>`;
+        pill.querySelector('span').addEventListener('click', () => {
+            selectedArtist = null;
+            renderArtistPill();
+            validateUploadModal();
+        });
+        container.appendChild(pill);
+    }
+}
+
+function renderTagPills() {
+    const container = document.getElementById('tag-pill-container');
+    container.innerHTML = '';
+    selectedTags.forEach(text => {
+        const pill = document.createElement('div');
+        pill.className = 'pill';
+        pill.innerHTML = `${text} <span>✕</span>`;
+        pill.querySelector('span').addEventListener('click', () => {
+            selectedTags.delete(text);
+            renderTagPills();
+        });
+        container.appendChild(pill);
     });
-    
-    container.appendChild(pill);
+}
+
+function addPill(containerId, text, isArtist = false) {
+    if(isArtist) {
+        selectedArtist = text;
+        renderArtistPill();
+    } else {
+        selectedTags.add(text);
+        renderTagPills();
+    }
+    validateUploadModal();
 }
 
 // Setup the autocompletes
@@ -244,7 +282,7 @@ document.getElementById('save-metadata-btn').addEventListener('click', () => {
     
     // Using FormData for Multipart Image Upload
     const formData = new FormData();
-    formData.append('metadata', JSON.stringify({ title, artist: selectedArtist, tags: selectedTags }));
+    formData.append('metadata', JSON.stringify({ title, artist: selectedArtist, tags: Array.from(selectedTags) }));
     uploadFiles.forEach(file => {
         formData.append('files', file);
     });
@@ -277,9 +315,11 @@ dropzone.addEventListener('drop', (e) => {
     if(e.dataTransfer.files.length > 0) {
         uploadFiles = Array.from(e.dataTransfer.files);
         document.getElementById('meta-title').value = '';
-        document.getElementById('artist-pill-container').innerHTML = '';
-        document.getElementById('tag-pill-container').innerHTML = '';
-        selectedTags = []; selectedArtist = null;
+        selectedArtist = null;
+        selectedTags.clear();
+        renderArtistPill();
+        renderTagPills();
+        validateUploadModal();
         document.getElementById('confirmation-modal').style.display = 'flex';
     }
 });
@@ -407,3 +447,236 @@ function openReader(mangaId) {
         .catch(err => showError("Failed to open reader: " + err.message));
 }
 closeReader.addEventListener('click', () => { readerOverlay.style.display = 'none'; });
+
+// ==========================================
+// Context Menu & Book Actions
+// ==========================================
+
+let activeContextMenuMangaId = null;
+let activeContextMenuMangaTitle = null;
+
+function showContextMenu(e, id, title) {
+    e.preventDefault();
+    e.stopPropagation(); // Prevent opening reader
+    activeContextMenuMangaId = id;
+    activeContextMenuMangaTitle = title;
+    
+    const menu = document.getElementById('custom-context-menu');
+    menu.style.display = 'block';
+    
+    // Position menu
+    let x = e.pageX;
+    let y = e.pageY;
+    if (x + 200 > window.innerWidth) x = window.innerWidth - 200;
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+}
+
+// Hide context menu on click anywhere
+document.addEventListener('click', () => {
+    const menu = document.getElementById('custom-context-menu');
+    if(menu) menu.style.display = 'none';
+});
+
+// Delete Logic
+let deleteHoldTimer = null;
+const deleteBtn = document.getElementById('confirm-delete-btn');
+const deleteProgress = document.getElementById('delete-progress');
+
+document.getElementById('ctx-delete').addEventListener('click', () => {
+    document.getElementById('delete-book-modal').style.display = 'flex';
+});
+
+document.getElementById('cancel-delete-btn').addEventListener('click', () => {
+    document.getElementById('delete-book-modal').style.display = 'none';
+});
+
+deleteBtn.addEventListener('mousedown', startDeleteHold);
+deleteBtn.addEventListener('touchstart', startDeleteHold);
+
+deleteBtn.addEventListener('mouseup', cancelDeleteHold);
+deleteBtn.addEventListener('mouseleave', cancelDeleteHold);
+deleteBtn.addEventListener('touchend', cancelDeleteHold);
+
+function startDeleteHold(e) {
+    e.preventDefault();
+    deleteProgress.style.transition = 'width 3s linear';
+    deleteProgress.style.width = '100%';
+    
+    deleteHoldTimer = setTimeout(() => {
+        // Confirmed Delete
+        if(activeContextMenuMangaId) {
+            fetch(`/api/mangas/${activeContextMenuMangaId}`, { method: 'DELETE' })
+                .then(() => {
+                    showToast('Book deleted permanently.');
+                    document.getElementById('delete-book-modal').style.display = 'none';
+                    cancelDeleteHold();
+                    loadLibrary();
+                })
+                .catch(err => showError(err.message));
+        }
+    }, 3000);
+}
+
+function cancelDeleteHold() {
+    clearTimeout(deleteHoldTimer);
+    deleteProgress.style.transition = 'width 0.1s linear';
+    deleteProgress.style.width = '0%';
+}
+
+// Edit Metadata Logic
+let editSelectedArtist = null;
+let editSelectedTags = new Set();
+
+document.getElementById('ctx-edit').addEventListener('click', () => {
+    if(!activeContextMenuMangaId) return;
+    
+    fetch(`/api/mangas/${activeContextMenuMangaId}/pages`)
+        .then(res => res.json())
+        .then(pages => {
+            const previewContainer = document.getElementById('edit-preview-container');
+            previewContainer.innerHTML = pages.map(p => `<img src="/stream/${activeContextMenuMangaId}/${p}" class="edit-preview-img">`).join('');
+        });
+        
+    document.getElementById('edit-meta-title').value = activeContextMenuMangaTitle;
+    editSelectedArtist = null;
+    editSelectedTags.clear();
+    renderEditPills();
+    
+    document.getElementById('edit-metadata-modal').style.display = 'flex';
+});
+
+document.getElementById('cancel-edit-btn').addEventListener('click', () => {
+    document.getElementById('edit-metadata-modal').style.display = 'none';
+});
+
+function renderEditPills() {
+    const artistContainer = document.getElementById('edit-artist-pill-container');
+    artistContainer.innerHTML = editSelectedArtist ? `<span class="pill">${editSelectedArtist} <span onclick="editSelectedArtist=null; renderEditPills()">✕</span></span>` : '';
+    
+    const tagContainer = document.getElementById('edit-tag-pill-container');
+    tagContainer.innerHTML = Array.from(editSelectedTags).map(t => `<span class="pill">${t} <span onclick="editSelectedTags.delete('${t}'); renderEditPills()">✕</span></span>`).join('');
+}
+
+setupAutocomplete('edit-meta-artist', 'edit-artist-autocomplete', '/api/autocomplete/artists', (name) => {
+    editSelectedArtist = name;
+    renderEditPills();
+});
+
+setupAutocomplete('edit-meta-tags', 'edit-tag-autocomplete', '/api/autocomplete/tags', (name) => {
+    editSelectedTags.add(name);
+    renderEditPills();
+});
+
+document.getElementById('save-edit-btn').addEventListener('click', () => {
+    const title = document.getElementById('edit-meta-title').value.trim();
+    if(!title || !editSelectedArtist) {
+        showError('Title and Artist are required');
+        return;
+    }
+    
+    fetch(`/api/mangas/${activeContextMenuMangaId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, artist: editSelectedArtist, tags: Array.from(editSelectedTags) })
+    }).then(() => {
+        document.getElementById('edit-metadata-modal').style.display = 'none';
+        showToast('Metadata updated');
+        loadLibrary();
+    }).catch(err => showError(err.message));
+});
+
+// Reorder Pages Logic
+let draggedReorderItem = null;
+
+document.getElementById('ctx-reorder').addEventListener('click', () => {
+    if(!activeContextMenuMangaId) return;
+    document.getElementById('reorder-pages-overlay').style.display = 'block';
+    loadReorderGrid();
+});
+
+function loadReorderGrid() {
+    fetch(`/api/mangas/${activeContextMenuMangaId}/pages`)
+        .then(res => res.json())
+        .then(pages => {
+            const grid = document.getElementById('reorder-grid');
+            grid.innerHTML = pages.map(p => `
+                <div class="reorder-item" draggable="true" data-filename="${p}">
+                    <img src="/stream/${activeContextMenuMangaId}/${p}" class="reorder-img">
+                    <div class="reorder-name">${p}</div>
+                </div>
+            `).join('');
+            
+            setupDragAndDrop();
+        });
+}
+
+function setupDragAndDrop() {
+    const items = document.querySelectorAll('.reorder-item');
+    items.forEach(item => {
+        item.addEventListener('dragstart', function(e) {
+            draggedReorderItem = this;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+            setTimeout(() => this.style.opacity = '0.5', 0);
+        });
+        
+        item.addEventListener('dragend', function() {
+            this.style.opacity = '1';
+            items.forEach(i => i.classList.remove('drag-over'));
+        });
+        
+        item.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+        });
+        
+        item.addEventListener('dragleave', function() {
+            this.classList.remove('drag-over');
+        });
+        
+        item.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            if (draggedReorderItem !== this) {
+                const grid = document.getElementById('reorder-grid');
+                const allItems = Array.from(grid.querySelectorAll('.reorder-item'));
+                const draggedIdx = allItems.indexOf(draggedReorderItem);
+                const droppedIdx = allItems.indexOf(this);
+                
+                if (draggedIdx < droppedIdx) {
+                    this.parentNode.insertBefore(draggedReorderItem, this.nextSibling);
+                } else {
+                    this.parentNode.insertBefore(draggedReorderItem, this);
+                }
+            }
+        });
+    });
+}
+
+document.getElementById('cancel-reorder-btn').addEventListener('click', () => {
+    document.getElementById('reorder-pages-overlay').style.display = 'none';
+});
+
+document.getElementById('normalize-pages-btn').addEventListener('click', () => {
+    fetch(`/api/mangas/${activeContextMenuMangaId}/pages/normalize`, { method: 'POST' })
+        .then(res => res.json())
+        .then(res => {
+            showToast(`Normalized ${res.count} pages.`);
+            loadReorderGrid(); // Refresh
+        }).catch(err => showError(err.message));
+});
+
+document.getElementById('save-reorder-btn').addEventListener('click', () => {
+    const items = document.querySelectorAll('.reorder-item');
+    const newOrder = Array.from(items).map(item => item.dataset.filename);
+    
+    fetch(`/api/mangas/${activeContextMenuMangaId}/pages/reorder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newOrder })
+    }).then(() => {
+        showToast('Pages reordered successfully!');
+        document.getElementById('reorder-pages-overlay').style.display = 'none';
+    }).catch(err => showError(err.message));
+});

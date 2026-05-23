@@ -189,13 +189,90 @@
     <!-- Reader Mode Overlay -->
     <div class="reader-overlay" id="reader-overlay">
         <button class="close-reader glass-btn">✕ Close</button>
-        <div class="reader-scroll-container" id="reader-scroll-container">
-            <!-- Vertical Scroll Images go here -->
+        <div class="reader-content" id="reader-content">
+            <!-- Pages injected here -->
         </div>
-        <!-- End of Book Section -->
-        <div class="end-of-book glass-panel" id="end-of-book">
-            <h3>More by this Artist</h3>
-            <div class="related-grid" id="related-grid"></div>
+        <div id="end-of-book" class="end-of-book glass-panel" style="display: none;">
+            <h3>End of Book</h3>
+            <div id="related-works-grid" class="library-grid"></div>
+        </div>
+    </div>
+
+    <!-- Custom Context Menu -->
+    <div id="custom-context-menu" class="glass-panel context-menu">
+        <ul>
+            <li id="ctx-edit">✏️ Edit Metadata</li>
+            <li id="ctx-reorder">🔄 Modify Page Order</li>
+            <li id="ctx-delete" style="color: #f87171;">🗑️ Delete Book</li>
+        </ul>
+    </div>
+
+    <!-- Hold to Delete Modal -->
+    <div class="modal-overlay" id="delete-book-modal" style="z-index: 150;">
+        <div class="modal glass-panel" style="width: 400px; text-align: center;">
+            <h3 style="color: #f87171;">Delete Book?</h3>
+            <p style="margin: 15px 0; color: var(--text-muted);">This will permanently delete the folder and all pages.</p>
+            <div class="modal-actions" style="justify-content: center; flex-direction: column;">
+                <button class="btn glass-btn" id="cancel-delete-btn" style="width: 100%; margin-bottom: 10px;">Cancel</button>
+                <div style="position: relative; width: 100%;">
+                    <button class="btn delete-hold-btn" id="confirm-delete-btn" style="width: 100%;">Hold to Delete (3s)</button>
+                    <div class="delete-progress-bar" id="delete-progress"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Metadata Modal (Wider Layout) -->
+    <div class="modal-overlay" id="edit-metadata-modal" style="z-index: 150;">
+        <div class="modal glass-panel" style="width: 800px; max-width: 90vw; display: flex; padding: 0;">
+            <!-- Left Side: Preview -->
+            <div class="edit-preview-container" id="edit-preview-container">
+                <!-- Pages injected here -->
+            </div>
+            
+            <!-- Right Side: Form -->
+            <div style="flex: 1; padding: 30px; display: flex; flex-direction: column;">
+                <h2>Edit Metadata</h2>
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="edit-meta-title" class="glass-input">
+                </div>
+
+                <div class="form-group">
+                    <label>Artist</label>
+                    <div id="edit-artist-pill-container" class="pill-container"></div>
+                    <div class="pill-input-container">
+                        <input type="text" id="edit-meta-artist" class="glass-input" placeholder="Type artist name..." autocomplete="off">
+                    </div>
+                    <ul class="autocomplete-dropdown glass-panel" id="edit-artist-autocomplete"></ul>
+                </div>
+
+                <div class="form-group">
+                    <label>Tags</label>
+                    <div id="edit-tag-pill-container" class="pill-container"></div>
+                    <div class="pill-input-container">
+                        <input type="text" id="edit-meta-tags" class="glass-input" placeholder="Add a tag..." autocomplete="off">
+                    </div>
+                    <ul class="autocomplete-dropdown glass-panel" id="edit-tag-autocomplete"></ul>
+                </div>
+
+                <div class="modal-actions" style="margin-top: auto;">
+                    <button class="btn glass-btn" id="cancel-edit-btn">Cancel</button>
+                    <button class="btn glass-btn-primary" id="save-edit-btn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Reordering Full-Screen Overlay -->
+    <div class="reader-overlay" id="reorder-pages-overlay" style="z-index: 200;">
+        <div class="reorder-header glass-panel">
+            <button class="btn glass-btn" id="cancel-reorder-btn">✕ Cancel</button>
+            <button class="btn glass-btn" id="normalize-pages-btn">✨ Normalize Names</button>
+            <button class="btn glass-btn-primary" id="save-reorder-btn">💾 Save New Order</button>
+        </div>
+        <div class="reorder-grid" id="reorder-grid">
+            <!-- Draggable Pages Injected Here -->
         </div>
     </div>
 
