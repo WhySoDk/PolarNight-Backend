@@ -23,9 +23,19 @@ object MigrationService {
             
             if (parsed.artist != null && parsed.title.isNotBlank()) {
                 val destFolder = File(finalDir, folder.name)
+                destFolder.parentFile?.mkdirs()
+                
+                var moved = false
+                try {
+                    java.nio.file.Files.move(folder.toPath(), destFolder.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                    moved = true
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    moved = false
+                }
                 
                 // Move folder physically
-                if (folder.renameTo(destFolder)) {
+                if (moved) {
                     // Save to DB
                     dbQuery {
                         // Create or find artist
