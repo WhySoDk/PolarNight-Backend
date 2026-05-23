@@ -61,13 +61,25 @@ body {
 .view.active {
     display: flex;
 }
+.view-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+.view-header h2 { margin: 0; font-size: 1.8rem; }
 #upload-view, #migration-view, #management-view {
     max-width: 80%;
     margin: 0 auto;
 }
 
 /* Top Floating Bar */
-.top-floating-container { position: sticky; top: 15px; margin: 0 auto 20px auto; width: 90%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center; z-index: 50; pointer-events: none; }
+.top-floating-container { position: sticky; top: 15px; margin: 0 auto 20px auto; width: 90%; max-width: 1200px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; z-index: 50; pointer-events: none; }
+#toggle-filter-btn { justify-self: start; }
+.pill-search-container { justify-self: center; }
+#main-menu-btn { justify-self: end; }
 .glass-panel-element { pointer-events: auto; background: rgba(59, 130, 246, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--glass-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 .app-title-header { text-align: center; margin-bottom: 30px; padding: 40px 0 20px 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-bottom: 1px solid var(--glass-border); width: 100%; }
 .app-title { display: inline-block; font-family: 'Danfo', serif; font-size: 5rem; letter-spacing: 0.05em; font-weight: 700; margin: 0; background: linear-gradient(90deg, var(--primary-blue) 0%, var(--primary-blue) 40%, #ffffff 50%, var(--primary-blue) 60%, var(--primary-blue) 100%); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: shine 3s linear infinite; text-shadow: 0 0 20px rgba(59, 130, 246, 0.4); cursor: pointer; }
@@ -99,7 +111,7 @@ body {
 #jump-page-input::-webkit-outer-spin-button, #jump-page-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 #jump-page-input { -moz-appearance: textfield; }
 
-.manga-grid { display: grid; grid-template-columns: repeat(auto-fill, 15vw); justify-content: center; gap: 2vw; padding: 0 5%; }
+.manga-grid { display: grid; grid-template-columns: repeat(auto-fill, 15vw); justify-content: center; gap: 2vw; padding: 0 5%; width: 100%; box-sizing: border-box; }
 @media (max-width: 1024px) {
     .manga-grid { grid-template-columns: repeat(auto-fill, 25vw); }
 }
@@ -157,7 +169,8 @@ body {
 .reader-scroll-container img { width: 100%; height: auto; display: block; }
 .close-reader { position: fixed; top: 20px; left: 20px; z-index: 210; }
 .end-of-book { max-width: 1000px; margin: 50px auto; padding: 30px; text-align: left; }
-.related-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-top: 20px; }
+.related-grid { display: grid; grid-template-columns: repeat(5, 10vw); justify-content: center; gap: 15px; margin-top: 20px; }
+.related-grid .manga-card { width: 100%; }
 
 /* Responsive */
 @media (max-width: 768px) {
