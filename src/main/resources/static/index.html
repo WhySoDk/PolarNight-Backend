@@ -8,63 +8,71 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <nav class="sidebar glass-panel">
-            <h1 class="logo">PolarNight</h1>
-            <ul class="nav-links">
-                <li class="active" data-tab="library">Library</li>
+    <!-- Top Floating Toolbar -->
+    <header class="top-floating-bar glass-panel">
+        <button class="circle-btn" id="toggle-filter-btn" title="Toggle Filters">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+        </button>
+        
+        <div class="center-title-search">
+            <h1 class="app-title" id="home-title" style="cursor: pointer;">Polar Night</h1>
+            <div class="pill-search-container">
+                <input type="text" id="advanced-search-bar" class="pill-search-input" placeholder="Search or type tags...">
+                <button class="circle-btn search-submit-btn" id="search-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div style="position: relative;">
+            <button class="circle-btn" id="main-menu-btn" title="Menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <ul class="dropdown-menu glass-panel" id="main-dropdown-menu">
                 <li data-tab="upload">Upload</li>
                 <li data-tab="migration">Migration</li>
                 <li data-tab="management">Management</li>
             </ul>
-        </nav>
+        </div>
+    </header>
 
+    <!-- Sliding Filter Sidebar -->
+    <aside class="slide-filter-panel glass-panel" id="filter-panel">
+        <h3>Artist Filter</h3>
+        <select id="library-artist-filter" class="glass-input" style="width: 100%; margin-bottom: 20px;">
+            <option value="">All Artists</option>
+        </select>
+
+        <h3>Tag Filter</h3>
+        <div class="advanced-search-helper">
+            <small>Hold SHIFT to exclude (NOT).</small>
+        </div>
+        <div id="tag-checkbox-list" class="tag-checkbox-list">
+            <!-- Populated dynamically -->
+        </div>
+    </aside>
+
+    <div class="app-container">
         <!-- Main Content Area -->
         <main class="content-area">
             
             <!-- Library View -->
             <section id="library-view" class="view active">
-                <div class="library-layout">
-                    <!-- Sidebar Tag Checkboxes -->
-                    <aside class="library-sidebar glass-panel">
-                        <h3>Artist Filter</h3>
-                        <select id="library-artist-filter" class="glass-input" style="width: 100%; margin-bottom: 20px;">
-                            <option value="">All Artists</option>
-                        </select>
-
-                        <h3>Tag Filter</h3>
-                        <div class="advanced-search-helper">
-                            <small>Hold SHIFT to exclude (NOT).</small>
-                        </div>
-                        <div id="tag-checkbox-list" class="tag-checkbox-list">
-                            <!-- Populated dynamically -->
-                        </div>
-                        <button class="btn glass-btn-primary" id="apply-filters-btn">Apply Filters</button>
-                    </aside>
-
-                    <div class="library-main">
-                        <header class="view-header glass-panel">
-                            <h2>Library</h2>
-                            <div class="search-container">
-                                <input type="text" id="advanced-search-bar" class="search-bar glass-input" placeholder="e.g. Action (Romance OR Drama) NOT Horror">
-                                <button class="btn glass-btn" id="search-btn">Search</button>
-                            </div>
-                        </header>
-                        
-                        <div class="manga-grid" id="manga-grid">
-                            <!-- Dynamic Manga Cards Go Here -->
-                        </div>
-
-                        <!-- Pagination -->
-                        <div class="pagination-controls glass-panel" id="pagination-controls">
-                            <button class="btn glass-btn" id="prev-page">◀ Prev</button>
-                            <span id="page-indicator">Page 1 of 1</span>
-                            <button class="btn glass-btn" id="next-page">Next ▶</button>
-                        </div>
-                    </div>
+                <div class="manga-grid" id="manga-grid">
+                    <!-- Dynamic Manga Cards Go Here -->
                 </div>
             </section>
+
+    <!-- Bottom Floating Pagination -->
+    <div class="bottom-floating-bar glass-panel" id="pagination-controls">
+        <button class="circle-btn" id="prev-page">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <span class="pill-page-indicator" id="page-indicator">1 / 1</span>
+        <button class="circle-btn" id="next-page">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+    </div>
 
             <!-- Upload / Pipeline View -->
             <section id="upload-view" class="view">

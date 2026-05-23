@@ -89,7 +89,7 @@ function loadLibrary() {
                         </div>
                     </div>`;
             });
-            document.getElementById('page-indicator').innerText = `Page ${res.page} of ${res.totalPages}`;
+            document.getElementById('page-indicator').innerText = `${res.page} / ${res.totalPages}`;
         })
         .catch(err => showError("Failed to load library: " + err.message));
 }
@@ -98,17 +98,18 @@ document.getElementById('prev-page').addEventListener('click', () => { if(curren
 document.getElementById('next-page').addEventListener('click', () => { currentPage++; loadLibrary(); });
 
 document.getElementById('search-btn').addEventListener('click', () => { currentPage = 1; loadLibrary(); });
-document.getElementById('apply-filters-btn').addEventListener('click', () => { currentPage = 1; loadLibrary(); });
+document.getElementById('advanced-search-bar').addEventListener('keyup', (e) => { if(e.key === 'Enter') { currentPage = 1; loadLibrary(); } });
 
 // Load initial
 loadLibrary();
 
-// Populate Tag Sidebar
+// // Populate Tag Sidebar
 fetch('/api/management/tags').then(res => res.json()).then(tags => {
     const list = document.getElementById('tag-checkbox-list');
     list.innerHTML = tags.map(t => `
-        <label><input type="checkbox" value="${t.name}"> ${t.name}</label><br>
+        <label><input type="checkbox" value="${t.name}"> ${t.name}</label>
     `).join('');
+    list.querySelectorAll('input').forEach(cb => cb.addEventListener('change', () => { currentPage = 1; loadLibrary(); }));
 });
 
 // Populate Artist Filter Sidebar
@@ -117,8 +118,42 @@ fetch('/api/management/artists').then(res => res.json()).then(artists => {
     artists.forEach(a => {
         select.innerHTML += `<option value="${a.id}">${a.primaryName}</option>`;
     });
+    select.addEventListener('change', () => { currentPage = 1; loadLibrary(); });
 });
-document.getElementById('library-artist-filter').addEventListener('change', () => { currentPage = 1; loadLibrary(); });
+
+// UI Floating Elements Logic
+const filterBtn = document.getElementById('toggle-filter-btn');
+const filterPanel = document.getElementById('filter-panel');
+if(filterBtn) filterBtn.addEventListener('click', (e) => { e.stopPropagation(); filterPanel.classList.toggle('open'); });
+
+const menuBtn = document.getElementById('main-menu-btn');
+const dropdownMenu = document.getElementById('main-dropdown-menu');
+if(menuBtn) menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdownMenu.style.display = dropdownMenu.style.display === 'flex' ? 'none' : 'flex';
+});
+
+document.addEventListener('click', (e) => {
+    if(dropdownMenu && !dropdownMenu.contains(e.target) && !menuBtn.contains(e.target)) dropdownMenu.style.display = 'none';
+    if(filterPanel && !filterPanel.contains(e.target) && !filterBtn.contains(e.target)) filterPanel.classList.remove('open');
+});
+
+// View Switching
+document.querySelectorAll('#main-dropdown-menu li, #home-title').forEach(link => {
+    link.addEventListener('click', (e) => {
+        const tab = e.target.dataset.tab || 'library';
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        
+        if (tab === 'library') document.getElementById('library-view').classList.add('active');
+        else if (tab === 'upload') document.getElementById('upload-view').classList.add('active');
+        else if (tab === 'migration') document.getElementById('migration-view').classList.add('active');
+        else if (tab === 'management') {
+            document.getElementById('management-view').classList.add('active');
+            loadManagementData();
+        }
+        if(dropdownMenu) dropdownMenu.style.display = 'none';
+    });
+});
 
 // Autocomplete Logic with Keyboard Navigation
 function setupAutocomplete(inputId, dropdownId, endpoint, onSelect) {
