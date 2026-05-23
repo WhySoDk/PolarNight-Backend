@@ -26,6 +26,7 @@ fun Route.mangaRoutes() {
             val includeAll = call.request.queryParameters["includeAll"]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
             val includeAny = call.request.queryParameters["includeAny"]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
             val exclude = call.request.queryParameters["exclude"]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+            val tagGroupsFilter = call.request.queryParameters["tagGroups"]?.split(",")?.mapNotNull { it.toIntOrNull() } ?: emptyList()
             val artistIdFilter = call.request.queryParameters["artistId"]?.toIntOrNull()
             val groupIdFilter = call.request.queryParameters["groupId"]?.toIntOrNull()
             val searchQuery = call.request.queryParameters["search"]?.trim()
@@ -50,7 +51,7 @@ fun Route.mangaRoutes() {
                     mangas = mangas.filter { it.artist?.group?.id?.value == groupIdFilter }
                 }
 
-                if (includeAll.isNotEmpty() || includeAny.isNotEmpty() || exclude.isNotEmpty()) {
+                if (includeAll.isNotEmpty() || includeAny.isNotEmpty() || exclude.isNotEmpty() || tagGroupsFilter.isNotEmpty()) {
                     mangas = mangas.filter { manga ->
                         val mangaTags = manga.tags.map { it.name.lowercase() }.toMutableList()
                         manga.artist?.primaryName?.let { mangaTags.add(it.lowercase()) }
@@ -60,7 +61,11 @@ fun Route.mangaRoutes() {
                         val hasAny = includeAny.isEmpty() || includeAny.any { it.lowercase() in mangaTags }
                         val hasNone = exclude.isEmpty() || exclude.none { it.lowercase() in mangaTags }
                         
-                        hasAll && hasAny && hasNone
+                        val hasTagGroups = tagGroupsFilter.isEmpty() || tagGroupsFilter.all { groupId ->
+                            manga.tags.any { it.group?.id?.value == groupId }
+                        }
+                        
+                        hasAll && hasAny && hasNone && hasTagGroups
                     }
                 }
                 

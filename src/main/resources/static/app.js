@@ -57,8 +57,11 @@ function loadLibrary() {
     let includeAny = [];
     let exclude = [];
     
-    const checkedTags = Array.from(document.querySelectorAll('#tag-checkbox-list input:checked')).map(cb => cb.value);
+    const checkedTags = Array.from(document.querySelectorAll('#tag-checkbox-list input[data-type="tag"]:checked')).map(cb => cb.value);
     includeAll.push(...checkedTags);
+
+    const checkedTagGroups = Array.from(document.querySelectorAll('#tag-checkbox-list input[data-type="group"]:checked')).map(cb => cb.value.split('_')[1]);
+    if (checkedTagGroups.length > 0) url += `&tagGroups=${checkedTagGroups.join(',')}`;
 
     if (search.trim() !== '') {
         const notMatches = search.match(/(?:NOT\s+|-)(?:\[(.*?)\]|(\w+))/gi) || [];
@@ -146,10 +149,7 @@ fetch('/api/management/tags').then(res => res.json()).then(data => {
     const list = document.getElementById('tag-checkbox-list');
     let html = '';
     data.groups.forEach(g => {
-        html += `<h4 style="margin: 15px 0 5px 0; color: var(--primary-blue); font-size: 0.9em; text-transform: uppercase;">${g.name}</h4>`;
-        g.tags.forEach(t => {
-            html += `<label><input type="checkbox" value="${t.name}"> ${t.name}</label>`;
-        });
+        html += `<label style="color: var(--primary-blue); font-weight: bold; margin-top: 10px;"><input type="checkbox" value="group_${g.id}" data-type="group"> ${g.name.toUpperCase()}</label>`;
     });
     if(data.standalone.length > 0) {
         html += `<h4 style="margin: 15px 0 5px 0; color: var(--primary-blue); font-size: 0.9em; text-transform: uppercase;">Standalone Tags</h4>`;
