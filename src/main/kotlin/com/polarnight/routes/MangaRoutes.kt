@@ -64,6 +64,7 @@ fun Route.mangaRoutes() {
                     }
                 }
                 
+                mangas = mangas.sortedByDescending { it.createdAt }
                 val totalItems = mangas.size
                 val totalPages = Math.ceil(totalItems.toDouble() / limit).toInt()
                 val paginatedMangas = mangas.drop((page - 1) * limit).take(limit)

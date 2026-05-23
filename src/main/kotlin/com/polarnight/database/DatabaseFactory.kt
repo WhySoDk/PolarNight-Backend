@@ -3,6 +3,7 @@ package com.polarnight.database
 import com.polarnight.database.models.MangaTags
 import com.polarnight.database.models.Mangas
 import com.polarnight.database.models.Tags
+import com.polarnight.database.models.TagGroups
 import com.polarnight.database.models.Artists
 import com.polarnight.database.models.ArtistVariants
 import com.polarnight.database.models.ArtistGroups
@@ -29,7 +30,7 @@ object DatabaseFactory {
         val database = Database.connect(url, "org.sqlite.JDBC")
 
         transaction(database) {
-            SchemaUtils.create(ArtistGroups, Artists, ArtistVariants, Mangas, Tags, MangaTags)
+            SchemaUtils.create(ArtistGroups, Artists, ArtistVariants, Mangas, TagGroups, Tags, MangaTags)
             
             // Migrate variants to groups if any exist
             val existingVariants = ArtistVariant.all().toList()

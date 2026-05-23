@@ -53,7 +53,14 @@ object MigrationService {
                             artist = artistEntity
                             folderPath = destFolder.absolutePath
                             status = "CONFIRMED"
+                            createdAt = java.time.LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(folder.lastModified()), java.time.ZoneId.systemDefault())
                         }
+
+                        val tagEntities = parsed.tags.map { tagName ->
+                            com.polarnight.database.models.Tag.find { com.polarnight.database.models.Tags.name eq tagName }.firstOrNull()
+                                ?: com.polarnight.database.models.Tag.new { name = tagName }
+                        }
+                        manga.tags = org.jetbrains.exposed.sql.SizedCollection(tagEntities)
                         
                         // Generate Thumbnails
                         val validExtensions = listOf("jpg", "jpeg", "png", "webp")

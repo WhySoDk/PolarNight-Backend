@@ -31,6 +31,17 @@ object FolderParser {
             title = folderName
         }
         
-        return ParsedFolder(artist, title, tags.filter { it.isNotBlank() })
+        val translatedTags = tags.filter { it.isNotBlank() }.map { rawTag ->
+            when (rawTag.lowercase()) {
+                "th", "thai", "ไทย" -> "TH"
+                "en", "english" -> "EN"
+                "jp", "jpn", "japan" -> "JP"
+                "cn", "china" -> "CN"
+                "kr", "kn", "korean" -> "KR"
+                else -> rawTag
+            }
+        }
+        
+        return ParsedFolder(artist, title, translatedTags)
     }
 }

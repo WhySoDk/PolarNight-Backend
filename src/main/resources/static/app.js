@@ -13,6 +13,15 @@ document.querySelectorAll('.nav-links li').forEach(link => {
 let currentPage = 1;
 const limit = 24;
 
+document.getElementById('home-title').addEventListener('click', () => {
+    document.getElementById('advanced-search-bar').value = '';
+    document.getElementById('library-artist-filter').value = '';
+    document.querySelectorAll('#tag-checkbox-list input[type="checkbox"]').forEach(cb => cb.checked = false);
+    currentPage = 1;
+    showTab('library');
+    loadLibrary();
+});
+
 // Error Toast Logic
 function showError(message) {
     const toast = document.getElementById('error-toast');
@@ -132,12 +141,23 @@ document.getElementById('advanced-search-bar').addEventListener('keyup', (e) => 
 // Load initial
 loadLibrary();
 
-// // Populate Tag Sidebar
-fetch('/api/management/tags').then(res => res.json()).then(tags => {
+// Populate Tag Sidebar
+fetch('/api/management/tags').then(res => res.json()).then(data => {
     const list = document.getElementById('tag-checkbox-list');
-    list.innerHTML = tags.map(t => `
-        <label><input type="checkbox" value="${t.name}"> ${t.name}</label>
-    `).join('');
+    let html = '';
+    data.groups.forEach(g => {
+        html += `<h4 style="margin: 15px 0 5px 0; color: var(--primary-blue); font-size: 0.9em; text-transform: uppercase;">${g.name}</h4>`;
+        g.tags.forEach(t => {
+            html += `<label><input type="checkbox" value="${t.name}"> ${t.name}</label>`;
+        });
+    });
+    if(data.standalone.length > 0) {
+        html += `<h4 style="margin: 15px 0 5px 0; color: var(--primary-blue); font-size: 0.9em; text-transform: uppercase;">Standalone Tags</h4>`;
+        data.standalone.forEach(t => {
+            html += `<label><input type="checkbox" value="${t.name}"> ${t.name}</label>`;
+        });
+    }
+    list.innerHTML = html;
     list.querySelectorAll('input').forEach(cb => cb.addEventListener('change', () => { currentPage = 1; loadLibrary(); }));
 });
 
@@ -446,9 +466,30 @@ document.getElementById('run-migration-btn').addEventListener('click', () => {
 
 // Management Logic
 function loadManagement() {
-    fetch('/api/management/tags').then(res => res.json()).then(tags => {
-        const list = document.getElementById('manage-tag-list');
-        list.innerHTML = tags.map(t => `<li>${t.name} <button class="btn glass-btn" onclick="fetch('/api/management/tags/${t.id}', {method:'DELETE'}).then(loadManagement)">Del</button></li>`).join('');
+    fetch('/api/management/tags').then(res => res.json()).then(data => {
+        const pool = document.getElementById('standalone-tag-pool');
+        if(pool) pool.innerHTML = data.standalone.map(t => `
+            <div class="pill draggable-pill" draggable="true" ondragstart="dragTag(event, ${t.id})" id="tag-pill-${t.id}">
+                ${t.name} <span onclick="deleteTag(${t.id})">✕</span>
+            </div>
+        `).join('');
+
+        const groupGrid = document.getElementById('tag-group-grid');
+        if(groupGrid) groupGrid.innerHTML = data.groups.map(g => `
+            <div class="artist-group-card">
+                <div style="display: flex; justify-content: space-between;">
+                    <h4 style="margin: 0;">${g.name}</h4>
+                    <button class="btn glass-btn" onclick="deleteTagGroup(${g.id})">Del</button>
+                </div>
+                <div class="artist-group-dropzone" ondragover="allowDrop(event)" ondrop="dropToTagGroup(event, ${g.id})">
+                    ${g.tags.map(t => `
+                        <div class="pill draggable-pill" draggable="true" ondragstart="dragTag(event, ${t.id})" id="tag-pill-${t.id}">
+                            ${t.name} <span onclick="deleteTag(${t.id})">✕</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
     });
     
     fetch('/api/management/artists').then(res => res.json()).then(data => {
@@ -545,6 +586,75 @@ function dropToGroup(e, groupId) {
 
 function updateArtistGroup(artistId, groupId) {
     fetch(`/api/management/artists/${artistId}/group`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupId })
+    }).then(loadManagement);
+}
+
+// Tag Management functions
+function createNewTag() {
+    const input = document.getElementById('new-tag-input');
+    const name = input.value.trim();
+    if (!name) return;
+    fetch('/api/management/tags', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ name })
+    }).then(() => {
+        input.value = '';
+        loadManagement();
+    });
+}
+
+function createNewTagGroup() {
+    const input = document.getElementById('new-tag-group-input');
+    const name = input.value.trim();
+    if (!name) return;
+    fetch('/api/management/tag-groups', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ name })
+    }).then(() => {
+        input.value = '';
+        loadManagement();
+    });
+}
+
+function deleteTag(id) {
+    if(confirm('Are you sure you want to delete this tag?')) {
+        fetch(`/api/management/tags/${id}`, { method: 'DELETE' }).then(loadManagement);
+    }
+}
+
+function deleteTagGroup(id) {
+    if(confirm('Are you sure you want to delete this tag group?')) {
+        fetch(`/api/management/tag-groups/${id}`, { method: 'DELETE' }).then(loadManagement);
+    }
+}
+
+function dragTag(e, id) {
+    e.dataTransfer.setData('tagId', id);
+}
+
+function dropToTagPool(e) {
+    e.preventDefault();
+    const tagId = e.dataTransfer.getData('tagId');
+    if (tagId) {
+        updateTagGroup(tagId, null);
+    }
+}
+
+function dropToTagGroup(e, groupId) {
+    e.preventDefault();
+    const tagId = e.dataTransfer.getData('tagId');
+    if (tagId) {
+        updateTagGroup(tagId, groupId);
+    }
+}
+
+function updateTagGroup(tagId, groupId) {
+    fetch(`/api/management/tags/${tagId}/group`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ groupId })

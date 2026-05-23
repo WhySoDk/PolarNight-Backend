@@ -29,8 +29,57 @@ fun Route.managementRoutes() {
 
         // Tags
         get("/tags") {
-            val tags = dbQuery { Tag.all().map { mapOf("id" to it.id.value, "name" to it.name) } }
-            call.respond(tags)
+            val data = dbQuery {
+                val allGroups = TagGroup.all().map { group ->
+                    mapOf(
+                        "id" to group.id.value,
+                        "name" to group.name,
+                        "tags" to Tag.find { Tags.group eq group.id }.map { 
+                            mapOf("id" to it.id.value, "name" to it.name) 
+                        }
+                    )
+                }
+                val standalone = Tag.find { Tags.group.isNull() }.map { tag ->
+                    mapOf("id" to tag.id.value, "name" to tag.name)
+                }
+                mapOf("groups" to allGroups, "standalone" to standalone)
+            }
+            call.respond(data)
+        }
+
+        post("/tag-groups") {
+            val req = call.receive<TagRequest>()
+            val group = dbQuery {
+                val existing = TagGroup.find { TagGroups.name eq req.name }.firstOrNull()
+                if (existing != null) return@dbQuery existing
+                TagGroup.new { name = req.name }
+            }
+            call.respond(mapOf("id" to group.id.value, "name" to group.name))
+        }
+
+        delete("/tag-groups/{id}") {
+            val id = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(HttpStatusCode.BadRequest)
+            dbQuery { 
+                Tag.find { Tags.group eq id }.forEach { it.group = null }
+                TagGroups.deleteWhere { TagGroups.id eq id }
+            }
+            call.respond(HttpStatusCode.OK)
+        }
+
+        put("/tags/{id}/group") {
+            val tagId = call.parameters["id"]?.toIntOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest)
+            val req = call.receive<Map<String, Int?>>()
+            val groupId = req["groupId"]
+            dbQuery {
+                val tag = Tag.findById(tagId) ?: return@dbQuery
+                if (groupId == null) {
+                    tag.group = null
+                } else {
+                    val group = TagGroup.findById(groupId) ?: return@dbQuery
+                    tag.group = group
+                }
+            }
+            call.respond(HttpStatusCode.OK)
         }
 
         post("/tags") {
