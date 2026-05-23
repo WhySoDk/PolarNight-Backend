@@ -27,8 +27,14 @@ object MigrationService {
                 
                 var moved = false
                 try {
-                    java.nio.file.Files.move(folder.toPath(), destFolder.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
-                    moved = true
+                    if (folder.renameTo(destFolder)) {
+                        moved = true
+                    } else {
+                        if (folder.copyRecursively(destFolder, overwrite = true)) {
+                            folder.deleteRecursively()
+                            moved = true
+                        }
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                     moved = false
