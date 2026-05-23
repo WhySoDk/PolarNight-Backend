@@ -695,3 +695,12 @@ document.getElementById('save-reorder-btn').addEventListener('click', () => {
         document.getElementById('reorder-pages-overlay').style.display = 'none';
     }).catch(err => showError(err.message));
 });
+
+// Close any modal when clicking outside of it
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            overlay.style.display = 'none';
+        }
+    });
+});
