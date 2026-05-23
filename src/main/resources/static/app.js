@@ -169,16 +169,22 @@ document.querySelectorAll('#main-dropdown-menu li, #home-title').forEach(link =>
         const tab = e.target.dataset.tab || 'library';
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         
+        const searchContainer = document.querySelector('.pill-search-container');
+        const filterBtn = document.getElementById('toggle-filter-btn');
         if (tab === 'library') {
             document.getElementById('library-view').classList.add('active');
             document.querySelector('.bottom-floating-container').style.display = 'flex';
+            if (searchContainer) searchContainer.style.display = 'flex';
+            if (filterBtn) filterBtn.style.display = 'flex';
         } else {
             document.querySelector('.bottom-floating-container').style.display = 'none';
+            if (searchContainer) searchContainer.style.display = 'none';
+            if (filterBtn) filterBtn.style.display = 'none';
             if (tab === 'upload') document.getElementById('upload-view').classList.add('active');
             else if (tab === 'migration') document.getElementById('migration-view').classList.add('active');
             else if (tab === 'management') {
                 document.getElementById('management-view').classList.add('active');
-                loadManagementData();
+                loadManagement();
             }
         }
         if(dropdownMenu) dropdownMenu.style.display = 'none';
