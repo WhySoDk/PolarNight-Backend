@@ -7,6 +7,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
 import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.serialization.gson.*

@@ -7,15 +7,12 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.update
 
-@Serializable
 data class TagRequest(val name: String)
 
-@Serializable
 data class VariantRequest(val name: String)
 
 fun Route.managementRoutes() {
