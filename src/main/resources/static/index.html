@@ -9,31 +9,6 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Top Floating Elements (Separated) -->
-    <div class="top-floating-container">
-        <button class="circle-btn glass-panel-element" id="toggle-filter-btn" title="Toggle Filters">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-        </button>
-        
-        <div class="pill-search-container glass-panel-element">
-            <input type="text" id="advanced-search-bar" class="pill-search-input" placeholder="Search or type tags...">
-            <button class="circle-btn search-submit-btn" id="search-btn" style="background: transparent; color: var(--text-main);">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            </button>
-        </div>
-
-        <div style="position: relative;">
-            <button class="circle-btn glass-panel-element" id="main-menu-btn" title="Menu">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-            </button>
-            <ul class="dropdown-menu glass-panel" id="main-dropdown-menu">
-                <li data-tab="upload">Upload</li>
-                <li data-tab="migration">Migration</li>
-                <li data-tab="management">Management</li>
-            </ul>
-        </div>
-    </div>
-
     <!-- Sliding Filter Sidebar -->
     <aside class="slide-filter-panel glass-panel" id="filter-panel">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -62,6 +37,31 @@
             <header class="app-title-header">
                 <h1 class="app-title" id="home-title" style="cursor: pointer;">Polar Night</h1>
             </header>
+
+            <!-- Top Floating Elements (Separated) -->
+            <div class="top-floating-container">
+                <button class="circle-btn glass-panel-element" id="toggle-filter-btn" title="Toggle Filters">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                </button>
+                
+                <div class="pill-search-container glass-panel-element">
+                    <input type="text" id="advanced-search-bar" class="pill-search-input" placeholder="Search or type tags...">
+                    <button class="circle-btn search-submit-btn" id="search-btn" style="background: transparent; color: var(--text-main);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </button>
+                </div>
+
+                <div style="position: relative;">
+                    <button class="circle-btn glass-panel-element" id="main-menu-btn" title="Menu">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <ul class="dropdown-menu glass-panel" id="main-dropdown-menu">
+                        <li data-tab="upload">Upload</li>
+                        <li data-tab="migration">Migration</li>
+                        <li data-tab="management">Management</li>
+                    </ul>
+                </div>
+            </div>
 
             <!-- Library View -->
             <section id="library-view" class="view active">
