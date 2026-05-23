@@ -53,6 +53,9 @@ body {
 .content-area { flex: 1; overflow-y: auto; padding-bottom: 100px; }
 .view {
     display: none;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
     animation: fadeIn 0.3s ease;
 }
 .view.active {
