@@ -569,18 +569,9 @@ function openReader(mangaId) {
                 .then(related => {
                     const grid = document.getElementById('related-grid');
                     const artistStr = related.otherWorks[0]?.artist || related.sequel?.artist || '';
-                    let artistNameToSearch = artistStr;
-                    const matchedArtistObj = window.globalArtists?.find(a => 
-                        a.primaryName.toLowerCase() === artistStr.toLowerCase() || 
-                        a.variants.some(v => v.toLowerCase() === artistStr.toLowerCase())
-                    );
-                    if (matchedArtistObj) {
-                        artistNameToSearch = matchedArtistObj.primaryName;
-                    }
-
                     grid.innerHTML = `<div style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <h3 style="margin: 0;">More from this artist</h3>
-                        ${artistStr ? `<button class="btn btn-primary" onclick="searchArtist('${artistNameToSearch.replace(/'/g, "\\'")}')">Show More</button>` : ''}
+                        ${artistStr ? `<button class="btn btn-primary" onclick="searchArtist('${artistStr.replace(/'/g, "\\'")}')">Show More</button>` : ''}
                     </div>`;
                     if (related.sequel) {
                         grid.innerHTML += `<div class="related-manga-card" onclick="openReader(${related.sequel.id})"><img src="/api/mangas/${related.sequel.id}/thumbnail?type=web"><h4>Sequel: ${related.sequel.title}</h4></div>`;
