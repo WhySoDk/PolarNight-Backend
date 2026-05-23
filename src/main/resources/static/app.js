@@ -89,13 +89,28 @@ function loadLibrary() {
                         </div>
                     </div>`;
             });
-            document.getElementById('page-indicator').innerText = `${res.page} / ${res.totalPages}`;
+            document.getElementById('jump-page-input').value = res.page;
+            document.getElementById('total-pages-indicator').innerText = res.totalPages;
         })
         .catch(err => showError("Failed to load library: " + err.message));
 }
 
 document.getElementById('prev-page').addEventListener('click', () => { if(currentPage > 1) { currentPage--; loadLibrary(); }});
-document.getElementById('next-page').addEventListener('click', () => { currentPage++; loadLibrary(); });
+document.getElementById('next-page').addEventListener('click', () => { 
+    const totalPages = parseInt(document.getElementById('total-pages-indicator').innerText);
+    if(currentPage < totalPages) { currentPage++; loadLibrary(); }
+});
+
+document.getElementById('jump-page-input').addEventListener('change', (e) => {
+    const val = parseInt(e.target.value);
+    const totalPages = parseInt(document.getElementById('total-pages-indicator').innerText) || 1;
+    if(val >= 1 && val <= totalPages) {
+        currentPage = val;
+        loadLibrary();
+    } else {
+        e.target.value = currentPage; // revert
+    }
+});
 
 document.getElementById('search-btn').addEventListener('click', () => { currentPage = 1; loadLibrary(); });
 document.getElementById('advanced-search-bar').addEventListener('keyup', (e) => { if(e.key === 'Enter') { currentPage = 1; loadLibrary(); } });
@@ -123,8 +138,10 @@ fetch('/api/management/artists').then(res => res.json()).then(artists => {
 
 // UI Floating Elements Logic
 const filterBtn = document.getElementById('toggle-filter-btn');
+const closeFilterBtn = document.getElementById('close-filter-btn');
 const filterPanel = document.getElementById('filter-panel');
-if(filterBtn) filterBtn.addEventListener('click', (e) => { e.stopPropagation(); filterPanel.classList.toggle('open'); });
+if(filterBtn) filterBtn.addEventListener('click', (e) => { e.stopPropagation(); filterPanel.classList.add('open'); });
+if(closeFilterBtn) closeFilterBtn.addEventListener('click', () => { filterPanel.classList.remove('open'); });
 
 const menuBtn = document.getElementById('main-menu-btn');
 const dropdownMenu = document.getElementById('main-dropdown-menu');
@@ -135,7 +152,6 @@ if(menuBtn) menuBtn.addEventListener('click', (e) => {
 
 document.addEventListener('click', (e) => {
     if(dropdownMenu && !dropdownMenu.contains(e.target) && !menuBtn.contains(e.target)) dropdownMenu.style.display = 'none';
-    if(filterPanel && !filterPanel.contains(e.target) && !filterBtn.contains(e.target)) filterPanel.classList.remove('open');
 });
 
 // View Switching

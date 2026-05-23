@@ -6,26 +6,21 @@
     <title>PolarNight Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <!-- Top Floating Toolbar -->
-    <header class="top-floating-bar glass-panel">
-        <button class="circle-btn" id="toggle-filter-btn" title="Toggle Filters">
+    <!-- Top Floating Elements (Separated) -->
+    <div class="top-floating-container">
+        <button class="circle-btn glass-panel-element" id="toggle-filter-btn" title="Toggle Filters">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
         </button>
         
-        <div class="center-title-search">
-            <h1 class="app-title" id="home-title" style="cursor: pointer;">Polar Night</h1>
-            <div class="pill-search-container">
-                <input type="text" id="advanced-search-bar" class="pill-search-input" placeholder="Search or type tags...">
-                <button class="circle-btn search-submit-btn" id="search-btn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                </button>
-            </div>
+        <div class="pill-search-container glass-panel-element">
+            <input type="text" id="advanced-search-bar" class="pill-search-input" placeholder="Search or type tags...">
+            <button class="circle-btn search-submit-btn" id="search-btn" style="background: transparent; color: var(--text-main);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </button>
         </div>
 
         <div style="position: relative;">
-            <button class="circle-btn" id="main-menu-btn" title="Menu">
+            <button class="circle-btn glass-panel-element" id="main-menu-btn" title="Menu">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
             <ul class="dropdown-menu glass-panel" id="main-dropdown-menu">
@@ -34,10 +29,15 @@
                 <li data-tab="management">Management</li>
             </ul>
         </div>
-    </header>
+    </div>
 
     <!-- Sliding Filter Sidebar -->
     <aside class="slide-filter-panel glass-panel" id="filter-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0;">Filters</h3>
+            <button class="circle-btn" id="close-filter-btn" style="background: rgba(255,255,255,0.1);">✕</button>
+        </div>
+        
         <h3>Artist Filter</h3>
         <select id="library-artist-filter" class="glass-input" style="width: 100%; margin-bottom: 20px;">
             <option value="">All Artists</option>
@@ -56,6 +56,10 @@
         <!-- Main Content Area -->
         <main class="content-area">
             
+            <header class="app-title-header">
+                <h1 class="app-title" id="home-title" style="cursor: pointer;">Polar Night</h1>
+            </header>
+
             <!-- Library View -->
             <section id="library-view" class="view active">
                 <div class="manga-grid" id="manga-grid">
@@ -63,13 +67,19 @@
                 </div>
             </section>
 
-    <!-- Bottom Floating Pagination -->
-    <div class="bottom-floating-bar glass-panel" id="pagination-controls">
-        <button class="circle-btn" id="prev-page">
+    <!-- Bottom Floating Pagination (Separated) -->
+    <div class="bottom-floating-container">
+        <button class="circle-btn glass-panel-element" id="prev-page">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
         </button>
-        <span class="pill-page-indicator" id="page-indicator">1 / 1</span>
-        <button class="circle-btn" id="next-page">
+        
+        <div class="pill-page-indicator glass-panel-element" style="display: flex; align-items: center; gap: 5px;">
+            <input type="number" id="jump-page-input" class="glass-input" style="width: 50px; padding: 4px; text-align: center; border-radius: 12px; height: 30px;" value="1" min="1">
+            <span>/</span>
+            <span id="total-pages-indicator">1</span>
+        </div>
+        
+        <button class="circle-btn glass-panel-element" id="next-page">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
     </div>
