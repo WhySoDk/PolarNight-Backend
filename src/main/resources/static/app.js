@@ -128,13 +128,22 @@ fetch('/api/management/tags').then(res => res.json()).then(tags => {
 });
 
 // Populate Artist Filter Sidebar
+window.globalArtists = [];
 fetch('/api/management/artists').then(res => res.json()).then(artists => {
+    window.globalArtists = artists;
     const select = document.getElementById('library-artist-filter');
     artists.forEach(a => {
         select.innerHTML += `<option value="${a.id}">${a.primaryName}</option>`;
     });
     select.addEventListener('change', () => { currentPage = 1; loadLibrary(); });
 });
+
+function searchArtist(name) {
+    document.getElementById('reader-overlay').style.display = 'none';
+    document.getElementById('advanced-search-bar').value = name;
+    currentPage = 1;
+    loadLibrary();
+}
 
 // UI Floating Elements Logic
 const filterBtn = document.getElementById('toggle-filter-btn');
@@ -160,12 +169,17 @@ document.querySelectorAll('#main-dropdown-menu li, #home-title').forEach(link =>
         const tab = e.target.dataset.tab || 'library';
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         
-        if (tab === 'library') document.getElementById('library-view').classList.add('active');
-        else if (tab === 'upload') document.getElementById('upload-view').classList.add('active');
-        else if (tab === 'migration') document.getElementById('migration-view').classList.add('active');
-        else if (tab === 'management') {
-            document.getElementById('management-view').classList.add('active');
-            loadManagementData();
+        if (tab === 'library') {
+            document.getElementById('library-view').classList.add('active');
+            document.querySelector('.bottom-floating-container').style.display = 'flex';
+        } else {
+            document.querySelector('.bottom-floating-container').style.display = 'none';
+            if (tab === 'upload') document.getElementById('upload-view').classList.add('active');
+            else if (tab === 'migration') document.getElementById('migration-view').classList.add('active');
+            else if (tab === 'management') {
+                document.getElementById('management-view').classList.add('active');
+                loadManagementData();
+            }
         }
         if(dropdownMenu) dropdownMenu.style.display = 'none';
     });
@@ -494,7 +508,20 @@ function openReader(mangaId) {
                 .then(r => r.json())
                 .then(related => {
                     const grid = document.getElementById('related-grid');
-                    grid.innerHTML = '';
+                    const artistStr = related.otherWorks[0]?.artist || related.sequel?.artist || '';
+                    let artistNameToSearch = artistStr;
+                    const matchedArtistObj = window.globalArtists?.find(a => 
+                        a.primaryName.toLowerCase() === artistStr.toLowerCase() || 
+                        a.variants.some(v => v.toLowerCase() === artistStr.toLowerCase())
+                    );
+                    if (matchedArtistObj) {
+                        artistNameToSearch = matchedArtistObj.primaryName;
+                    }
+
+                    grid.innerHTML = `<div style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="margin: 0;">More from this artist</h3>
+                        ${artistStr ? `<button class="btn btn-primary" onclick="searchArtist('${artistNameToSearch.replace(/'/g, "\\'")}')">Show More</button>` : ''}
+                    </div>`;
                     if (related.sequel) {
                         grid.innerHTML += `<div class="manga-card" onclick="openReader(${related.sequel.id})"><img src="/api/mangas/${related.sequel.id}/thumbnail?type=web"><h4>Sequel: ${related.sequel.title}</h4></div>`;
                     }

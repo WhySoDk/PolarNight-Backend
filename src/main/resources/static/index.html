@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PolarNight Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Danfo&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+</head>
+<body>
     <!-- Top Floating Elements (Separated) -->
     <div class="top-floating-container">
         <button class="circle-btn glass-panel-element" id="toggle-filter-btn" title="Toggle Filters">
@@ -206,14 +209,15 @@
 
     <!-- Reader Mode Overlay -->
     <div class="reader-overlay" id="reader-overlay">
-        <button class="close-reader glass-btn">✕ Close</button>
+        <button class="close-reader circle-btn glass-panel-element" id="close-reader-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </button>
         <div class="reader-scroll-container" id="reader-scroll-container">
             <!-- Vertical Scroll Images go here -->
         </div>
         <!-- End of Book Section -->
         <div class="end-of-book glass-panel" id="end-of-book">
-            <h3>More by this Artist</h3>
-            <div class="related-grid" id="related-grid"></div>
+            <div id="related-grid"></div>
         </div>
     </div>
 
