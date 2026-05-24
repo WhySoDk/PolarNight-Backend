@@ -108,9 +108,15 @@ function loadLibrary() {
             res.data.forEach(manga => {
                 const favClass = manga.isFavorite ? '' : 'inactive';
                 const readRibbon = manga.isRead ? '<div class="read-ribbon"></div>' : '';
+                let langBadges = '';
+                if (manga.languages && manga.languages.length > 0) {
+                    const langTop = manga.isRead ? '35px' : '5px';
+                    langBadges = `<div class="language-badges" style="top: ${langTop};">` + manga.languages.map(l => `<div class="language-badge">${l}</div>`).join('') + `</div>`;
+                }
                 grid.innerHTML += `
                     <div class="manga-card" oncontextmenu="showContextMenu(event, ${manga.id}, \`${manga.title.replace(/`/g, '\\`')}\`)">
                         ${readRibbon}
+                        ${langBadges}
                         <div class="favorite-star ${favClass}" onclick="toggleFavorite(event, ${manga.id}, ${!manga.isFavorite})">★</div>
                         <img src="/api/mangas/${manga.id}/thumbnail?type=web" alt="${manga.title}" onclick="openReader(${manga.id})">
                         <div style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.7); padding:10px; pointer-events:none;">

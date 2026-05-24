@@ -79,13 +79,25 @@ fun Route.mangaRoutes() {
                     "totalPages" to totalPages,
                     "totalItems" to totalItems,
                     "data" to paginatedMangas.map { 
+                        val langs = mutableSetOf<String>()
+                        it.tags.forEach { t ->
+                            val tName = t.name.lowercase()
+                            val gName = t.group?.name?.lowercase()
+                            if (listOf("th", "thai", "ไทย").any { l -> tName == l || gName == l }) langs.add("TH")
+                            if (listOf("en", "eng", "english").any { l -> tName == l || gName == l }) langs.add("EN")
+                            if (listOf("jp", "jpn", "japan").any { l -> tName == l || gName == l }) langs.add("JP")
+                            if (listOf("cn", "china").any { l -> tName == l || gName == l }) langs.add("CN")
+                            if (listOf("kr", "korean", "kn").any { l -> tName == l || gName == l }) langs.add("KR")
+                        }
+
                         mapOf(
                             "id" to it.id.value,
                             "title" to it.title,
                             "artist" to (it.artist?.group?.name ?: it.artist?.primaryName),
                             "status" to it.status,
                             "isFavorite" to it.isFavorite,
-                            "isRead" to it.isRead
+                            "isRead" to it.isRead,
+                            "languages" to langs.toList()
                         )
                     }
                 )
