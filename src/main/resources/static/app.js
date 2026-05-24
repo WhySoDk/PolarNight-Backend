@@ -930,7 +930,7 @@ function startDeleteHold(e) {
             fetch(`/api/mangas/${activeContextMenuMangaId}`, { method: 'DELETE' })
                 .then(() => {
                     showToast('Book deleted permanently.');
-                    document.getElementById('delete-book-modal').style.display = 'none';
+                    closeModalAction();
                     cancelDeleteHold();
                     loadLibrary();
                 })
@@ -1049,7 +1049,7 @@ document.getElementById('save-edit-btn').addEventListener('click', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, artist: editSelectedArtist, tags: Array.from(editSelectedTags) })
     }).then(() => {
-        document.getElementById('edit-metadata-modal').style.display = 'none';
+        closeModalAction();
         showToast('Metadata updated');
         loadLibrary();
     }).catch(err => showError(err.message));
@@ -1057,6 +1057,7 @@ document.getElementById('save-edit-btn').addEventListener('click', () => {
 
 // Reorder Pages Logic
 let draggedReorderItem = null;
+let pendingDeletedPages = [];
 
 document.getElementById('ctx-reorder').addEventListener('click', () => {
     if(!activeContextMenuMangaId) return;
@@ -1065,13 +1066,21 @@ document.getElementById('ctx-reorder').addEventListener('click', () => {
     loadReorderGrid();
 });
 
+window.markPageForDeletion = function(e, btnElement, filename) {
+    e.stopPropagation();
+    pendingDeletedPages.push(filename);
+    btnElement.parentElement.remove();
+};
+
 function loadReorderGrid() {
+    pendingDeletedPages = [];
     fetch(`/api/mangas/${activeContextMenuMangaId}/pages`)
         .then(res => res.json())
         .then(pages => {
             const grid = document.getElementById('reorder-grid');
             grid.innerHTML = pages.map(p => `
                 <div class="reorder-item" draggable="true" data-filename="${p}">
+                    <div class="delete-page-btn" onclick="markPageForDeletion(event, this, '${p}')">✖</div>
                     <img src="/stream/${activeContextMenuMangaId}/${p}" class="reorder-img">
                     <div class="reorder-name">${p}</div>
                 </div>
@@ -1151,10 +1160,10 @@ document.getElementById('save-reorder-btn').addEventListener('click', () => {
     fetch(`/api/mangas/${activeContextMenuMangaId}/pages/reorder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newOrder })
+        body: JSON.stringify({ newOrder, deletedPages: pendingDeletedPages })
     }).then(() => {
         showToast('Pages reordered successfully!');
-        document.getElementById('reorder-pages-overlay').style.display = 'none';
+        closeModalAction();
     }).catch(err => showError(err.message));
 });
 

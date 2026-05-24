@@ -389,7 +389,9 @@ input[type="checkbox"].exclude-checkbox:checked::after {
 /* Reorder Grid */
 .reorder-header { position: absolute; top: 0; left: 0; right: 0; padding: 15px 30px; display: flex; gap: 15px; align-items: center; justify-content: flex-end; background: rgba(15, 23, 42, 0.9); border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 10; }
 .reorder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 80px 30px 30px; overflow-y: auto; height: 100%; box-sizing: border-box; }
-.reorder-item { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 5px; cursor: grab; text-align: center; border: 2px solid transparent; }
+.reorder-item { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 5px; cursor: grab; text-align: center; border: 2px solid transparent; position: relative; }
+.delete-page-btn { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; line-height: 22px; text-align: center; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10; transition: transform 0.1s; }
+.delete-page-btn:hover { transform: scale(1.1); background: #dc2626; }
 .reorder-item:active { cursor: grabbing; }
 .reorder-item.drag-over { border-color: #60a5fa; border-style: dashed; }
 .reorder-img { width: 100%; border-radius: 4px; pointer-events: none; }

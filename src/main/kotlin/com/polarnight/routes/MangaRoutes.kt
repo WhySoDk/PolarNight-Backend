@@ -14,7 +14,7 @@ import java.util.UUID
 import org.jetbrains.exposed.sql.SizedCollection
 
 data class MangaUpdateRequest(val title: String, val artist: String?, val tags: List<String>)
-data class PageReorderRequest(val newOrder: List<String>)
+data class PageReorderRequest(val newOrder: List<String>, val deletedPages: List<String>? = null)
 
 fun Route.mangaRoutes() {
     
@@ -278,8 +278,17 @@ fun Route.mangaRoutes() {
             // Final rename to 0001.jpg etc
             tempMapping.forEach { (tempFile, newIndex) ->
                 if (tempFile.exists()) {
-                    val newName = String.format("%04d.%s", newIndex, tempFile.extension)
+                    val ext = tempFile.extension
+                    val newName = String.format("%04d.%s", newIndex, ext)
                     tempFile.renameTo(File(folder, newName))
+                }
+            }
+
+            // Delete pages
+            req.deletedPages?.forEach { deletedPage ->
+                val toDelete = File(folder, deletedPage)
+                if (toDelete.exists()) {
+                    toDelete.delete()
                 }
             }
 
