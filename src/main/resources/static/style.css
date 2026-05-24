@@ -194,8 +194,8 @@ body {
     filter: brightness(1.2);
 }
 .favorite-star.inactive {
-    background: linear-gradient(to bottom left, rgba(0, 0, 0, 0.4) 50%, transparent 50%);
-    color: rgba(255, 255, 255, 0.3);
+    background: linear-gradient(to bottom left, rgba(0, 0, 0, 0.1) 50%, transparent 50%);
+    color: rgba(255, 255, 255, 0.15);
     text-shadow: none;
 }
 
@@ -222,8 +222,8 @@ body {
     filter: brightness(1.2);
 }
 .read-ribbon.inactive {
-    background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.4) 50%, transparent 50%);
-    color: rgba(255, 255, 255, 0.3);
+    background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.1) 50%, transparent 50%);
+    color: rgba(255, 255, 255, 0.15);
     text-shadow: none;
 }
 
@@ -339,6 +339,38 @@ body {
 .context-menu ul { list-style: none; margin: 0; padding: 0; }
 .context-menu li { padding: 10px 15px; cursor: pointer; border-radius: 6px; font-size: 0.9rem; transition: background 0.2s; }
 .context-menu li:hover { background: rgba(255,255,255,0.1); }
+
+/* Exclude Checkbox Styling */
+input[type="checkbox"].exclude-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 13px;
+    height: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    vertical-align: middle;
+    margin: 0;
+    outline: none;
+    background: rgba(0, 0, 0, 0.2);
+    transition: background 0.1s, border-color 0.1s;
+}
+input[type="checkbox"].exclude-checkbox:checked {
+    background-color: var(--accent-red);
+    border-color: var(--accent-red);
+}
+input[type="checkbox"].exclude-checkbox:checked::after {
+    content: "-";
+    color: white;
+    font-weight: 900;
+    font-size: 14px;
+    line-height: 1;
+    font-family: monospace;
+    transform: translateY(-1px);
+}
 
 /* Hold to Delete */
 .delete-hold-btn { background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); color: #f87171; position: relative; overflow: hidden; }

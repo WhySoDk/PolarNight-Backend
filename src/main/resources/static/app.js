@@ -224,17 +224,19 @@ fetch('/api/management/tags').then(res => res.json()).then(data => {
     const list = document.getElementById('tag-checkbox-list');
     let html = '';
     data.groups.forEach(g => {
-        html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                    <label style="color: var(--primary-blue); font-weight: bold;"><input type="checkbox" value="group_${g.id}" data-type="group"> ${g.name.toUpperCase()}</label>
-                    <label style="color: var(--accent-red); font-size: 0.8em;" title="Exclude"><input type="checkbox" value="group_${g.id}" data-type="group-exclude"> NOT</label>
+        html += `<div style="display: flex; align-items: center; margin-top: 10px;">
+                    <input type="checkbox" value="group_${g.id}" data-type="group" style="margin-right: 5px;" title="Include">
+                    <input type="checkbox" value="group_${g.id}" data-type="group-exclude" class="exclude-checkbox" style="margin-right: 8px;" title="Exclude">
+                    <label style="color: var(--primary-blue); font-weight: bold; margin: 0; cursor: pointer;">${g.name.toUpperCase()}</label>
                  </div>`;
     });
     if(data.standalone.length > 0) {
         html += `<h4 style="margin: 15px 0 5px 0; color: var(--primary-blue); font-size: 0.9em; text-transform: uppercase;">Standalone Tags</h4>`;
         data.standalone.forEach(t => {
-            html += `<div style="display: flex; justify-content: space-between; align-items: center;">
-                        <label><input type="checkbox" value="${t.name}" data-type="tag"> ${t.name}</label>
-                        <label style="color: var(--accent-red); font-size: 0.8em;" title="Exclude"><input type="checkbox" value="${t.name}" data-type="tag-exclude"> NOT</label>
+            html += `<div style="display: flex; align-items: center; margin-top: 5px;">
+                        <input type="checkbox" value="${t.name}" data-type="tag" style="margin-right: 5px;" title="Include">
+                        <input type="checkbox" value="${t.name}" data-type="tag-exclude" class="exclude-checkbox" style="margin-right: 8px;" title="Exclude">
+                        <label style="margin: 0; cursor: pointer;">${t.name}</label>
                      </div>`;
         });
     }
