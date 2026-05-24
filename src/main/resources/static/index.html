@@ -6,15 +6,19 @@
     <title>PolarNight Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Danfo&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/style.css?v=2.15">
+    <link rel="stylesheet" href="/style.css?v=2.16">
 </head>
 <body>
     <!-- Sliding Filter Sidebar -->
     <aside class="slide-filter-panel glass-panel" id="filter-panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div class="filter-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3 style="margin: 0;">Filters</h3>
             <button class="circle-btn" id="close-filter-btn" style="background: rgba(255,255,255,0.1);">✕</button>
         </div>
+        
+        <label style="display: block; margin: 15px 0; font-weight: bold; font-size: 1.1rem; cursor: pointer;">
+            <input type="checkbox" id="library-favorite-filter"> ★ Favorites Only
+        </label>
         
         <h3>Artist Filter</h3>
         <select id="library-artist-filter" class="glass-input" style="width: 100%; margin-bottom: 20px;">
@@ -22,9 +26,6 @@
         </select>
 
         <h3>Tag Filter</h3>
-        <div class="advanced-search-helper">
-            <small>Hold SHIFT to exclude (NOT).</small>
-        </div>
         <div id="tag-checkbox-list" class="tag-checkbox-list">
             <!-- Populated dynamically -->
         </div>
@@ -347,6 +348,6 @@
     <!-- Error Toast Notification -->
     <div id="error-toast" class="error-toast glass-panel"></div>
 
-    <script src="/app.js?v=2.15"></script>
+    <script src="/app.js?v=2.16"></script>
 </body>
 </html>

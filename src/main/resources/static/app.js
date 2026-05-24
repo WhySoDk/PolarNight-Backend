@@ -43,7 +43,12 @@ function showToast(message) {
 function loadLibrary() {
     const search = document.getElementById('advanced-search-bar').value;
     const artistFilter = document.getElementById('library-artist-filter').value;
+    const favFilter = document.getElementById('library-favorite-filter').checked;
     let url = `/api/mangas?page=${currentPage}&limit=${limit}`;
+    
+    if (favFilter) {
+        url += '&isFavorite=true';
+    }
     
     if (artistFilter) {
         if (artistFilter.startsWith('group_')) {
@@ -94,7 +99,7 @@ function loadLibrary() {
     if (exclude.length > 0) url += `&exclude=${encodeURIComponent(exclude.join(','))}`;
 
     const toggleBtn = document.getElementById('toggle-filter-btn');
-    if (artistFilter || includeAll.length > 0 || includeAny.length > 0 || exclude.length > 0) {
+    if (favFilter || artistFilter || includeAll.length > 0 || includeAny.length > 0 || exclude.length > 0 || checkedTagGroups.length > 0) {
         toggleBtn.classList.add('filter-active');
     } else {
         toggleBtn.classList.remove('filter-active');
@@ -173,6 +178,11 @@ setTimeout(() => {
         switchTab('library', true);
     }
 }, 100);
+
+document.getElementById('library-favorite-filter').addEventListener('change', () => {
+    currentPage = 1;
+    loadLibrary();
+});
 
 // Populate Tag Sidebar
 fetch('/api/management/tags').then(res => res.json()).then(data => {
@@ -284,6 +294,8 @@ function closeAllModals() {
     if (conf) conf.style.display = 'none';
     const ctx = document.getElementById('custom-context-menu');
     if (ctx) ctx.style.display = 'none';
+    const reorder = document.getElementById('reorder-pages-overlay');
+    if (reorder) reorder.style.display = 'none';
 }
 
 function closeModalAction() {
@@ -306,6 +318,10 @@ window.addEventListener('popstate', (e) => {
             document.getElementById('delete-book-modal').style.display = 'flex';
         } else if (e.state.modal === 'upload') {
             document.getElementById('confirmation-modal').style.display = 'flex';
+        } else if (e.state.modal === 'reorder') {
+            activeContextMenuMangaId = e.state.id;
+            document.getElementById('reorder-pages-overlay').style.display = 'block';
+            loadReorderGrid();
         } else if (e.state.tab) {
             switchTab(e.state.tab, false);
         }
@@ -1001,6 +1017,7 @@ let draggedReorderItem = null;
 
 document.getElementById('ctx-reorder').addEventListener('click', () => {
     if(!activeContextMenuMangaId) return;
+    pushModalState('reorder', activeContextMenuMangaId);
     document.getElementById('reorder-pages-overlay').style.display = 'block';
     loadReorderGrid();
 });
@@ -1065,7 +1082,7 @@ function setupDragAndDrop() {
 }
 
 document.getElementById('cancel-reorder-btn').addEventListener('click', () => {
-    document.getElementById('reorder-pages-overlay').style.display = 'none';
+    closeModalAction();
 });
 
 document.getElementById('normalize-pages-btn').addEventListener('click', () => {

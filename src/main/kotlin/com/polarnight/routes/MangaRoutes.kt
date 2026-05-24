@@ -29,6 +29,7 @@ fun Route.mangaRoutes() {
             val tagGroupsFilter = call.request.queryParameters["tagGroups"]?.split(",")?.mapNotNull { it.toIntOrNull() } ?: emptyList()
             val artistIdFilter = call.request.queryParameters["artistId"]?.toIntOrNull()
             val groupIdFilter = call.request.queryParameters["groupId"]?.toIntOrNull()
+            val isFavoriteFilter = call.request.queryParameters["isFavorite"]?.toBoolean() ?: false
             val searchQuery = call.request.queryParameters["search"]?.trim()
 
             val response = dbQuery {
@@ -49,6 +50,9 @@ fun Route.mangaRoutes() {
                 }
                 if (groupIdFilter != null) {
                     mangas = mangas.filter { it.artist?.group?.id?.value == groupIdFilter }
+                }
+                if (isFavoriteFilter) {
+                    mangas = mangas.filter { it.isFavorite }
                 }
 
                 if (includeAll.isNotEmpty() || includeAny.isNotEmpty() || exclude.isNotEmpty() || tagGroupsFilter.isNotEmpty()) {
