@@ -163,6 +163,17 @@ document.getElementById('advanced-search-bar').addEventListener('keyup', (e) => 
 // Load initial
 loadLibrary();
 
+setTimeout(() => {
+    const hash = window.location.hash;
+    if (hash.startsWith('#modal-reader')) {
+        openReader(hash.split('-')[2], true);
+    } else if (['#upload', '#management', '#migration'].includes(hash)) {
+        switchTab(hash.substring(1), true);
+    } else {
+        switchTab('library', true);
+    }
+}, 100);
+
 // Populate Tag Sidebar
 fetch('/api/management/tags').then(res => res.json()).then(data => {
     const list = document.getElementById('tag-checkbox-list');
@@ -220,31 +231,88 @@ document.addEventListener('click', (e) => {
 });
 
 // View Switching
+let isNavigatingHistory = false;
+function pushModalState(modalName, id = null) {
+    if (!isNavigatingHistory) {
+        let hash = `#modal-${modalName}`;
+        if (id) hash += `-${id}`;
+        history.pushState({ modal: modalName, id: id }, '', hash);
+    }
+}
+function switchTab(tab, pushState = true) {
+    if (pushState && !isNavigatingHistory) history.pushState({ tab: tab }, '', `#${tab}`);
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    
+    const searchContainer = document.querySelector('.pill-search-container');
+    const filterBtn = document.getElementById('toggle-filter-btn');
+    if (tab === 'library') {
+        document.getElementById('library-view').classList.add('active');
+        document.querySelector('.bottom-floating-container').style.display = 'flex';
+        if (searchContainer) searchContainer.style.display = 'flex';
+        if (filterBtn) filterBtn.style.display = 'flex';
+    } else {
+        document.querySelector('.bottom-floating-container').style.display = 'none';
+        if (searchContainer) searchContainer.style.display = 'none';
+        if (filterBtn) filterBtn.style.display = 'none';
+        if (tab === 'upload') document.getElementById('upload-view').classList.add('active');
+        else if (tab === 'migration') document.getElementById('migration-view').classList.add('active');
+        else if (tab === 'management') {
+            document.getElementById('management-view').classList.add('active');
+            loadManagement();
+        }
+    }
+    if(dropdownMenu) dropdownMenu.style.display = 'none';
+}
+
+history.replaceState({ tab: 'library' }, '', '#library');
+
 document.querySelectorAll('#main-dropdown-menu li, #home-title').forEach(link => {
     link.addEventListener('click', (e) => {
         const tab = e.target.dataset.tab || 'library';
-        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        
-        const searchContainer = document.querySelector('.pill-search-container');
-        const filterBtn = document.getElementById('toggle-filter-btn');
-        if (tab === 'library') {
-            document.getElementById('library-view').classList.add('active');
-            document.querySelector('.bottom-floating-container').style.display = 'flex';
-            if (searchContainer) searchContainer.style.display = 'flex';
-            if (filterBtn) filterBtn.style.display = 'flex';
-        } else {
-            document.querySelector('.bottom-floating-container').style.display = 'none';
-            if (searchContainer) searchContainer.style.display = 'none';
-            if (filterBtn) filterBtn.style.display = 'none';
-            if (tab === 'upload') document.getElementById('upload-view').classList.add('active');
-            else if (tab === 'migration') document.getElementById('migration-view').classList.add('active');
-            else if (tab === 'management') {
-                document.getElementById('management-view').classList.add('active');
-                loadManagement();
-            }
-        }
-        if(dropdownMenu) dropdownMenu.style.display = 'none';
+        switchTab(tab);
     });
+});
+
+function closeAllModals() {
+    const reader = document.getElementById('reader-overlay');
+    if (reader) reader.style.display = 'none';
+    const del = document.getElementById('delete-book-modal');
+    if (del) del.style.display = 'none';
+    const edit = document.getElementById('edit-metadata-modal');
+    if (edit) edit.style.display = 'none';
+    const conf = document.getElementById('confirmation-modal');
+    if (conf) conf.style.display = 'none';
+    const ctx = document.getElementById('custom-context-menu');
+    if (ctx) ctx.style.display = 'none';
+}
+
+function closeModalAction() {
+    if (history.state && history.state.modal) {
+        history.back();
+    } else {
+        closeAllModals();
+    }
+}
+
+window.addEventListener('popstate', (e) => {
+    isNavigatingHistory = true;
+    closeAllModals();
+    if (e.state) {
+        if (e.state.modal === 'reader') {
+            openReader(e.state.id, false);
+        } else if (e.state.modal === 'edit') {
+            openEditMetadata(e.state.id, false);
+        } else if (e.state.modal === 'delete') {
+            document.getElementById('delete-book-modal').style.display = 'flex';
+        } else if (e.state.modal === 'upload') {
+            document.getElementById('confirmation-modal').style.display = 'flex';
+        } else if (e.state.tab) {
+            switchTab(e.state.tab, false);
+        }
+    } else {
+        switchTab('library', false);
+    }
+    isNavigatingHistory = false;
 });
 
 // Autocomplete Logic with Keyboard Navigation
@@ -455,11 +523,12 @@ dropzone.addEventListener('drop', (e) => {
         renderArtistPill();
         renderTagPills();
         validateUploadModal();
+        pushModalState('upload');
         document.getElementById('confirmation-modal').style.display = 'flex';
     }
 });
 document.querySelector('.cancel-btn').addEventListener('click', () => {
-    document.getElementById('confirmation-modal').style.display = 'none';
+    closeModalAction();
 });
 
 // Migration logic
@@ -690,7 +759,8 @@ setupAutocomplete('variant-search-input', 'variant-autocomplete', '/api/autocomp
 // Reader Logic
 const readerOverlay = document.getElementById('reader-overlay');
 const closeReader = document.querySelector('.close-reader');
-function openReader(mangaId) {
+function openReader(mangaId, pushState = true) {
+    if (pushState) pushModalState('reader', mangaId);
     readerOverlay.style.display = 'block';
     readerOverlay.scrollTop = 0;
     
@@ -737,7 +807,7 @@ function openReader(mangaId) {
         })
         .catch(err => showError("Failed to open reader: " + err.message));
 }
-closeReader.addEventListener('click', () => { readerOverlay.style.display = 'none'; });
+closeReader.addEventListener('click', () => { closeModalAction(); });
 
 // ==========================================
 // Context Menu & Book Actions
@@ -775,11 +845,12 @@ const deleteBtn = document.getElementById('confirm-delete-btn');
 const deleteProgress = document.getElementById('delete-progress');
 
 document.getElementById('ctx-delete').addEventListener('click', () => {
+    pushModalState('delete', activeContextMenuMangaId);
     document.getElementById('delete-book-modal').style.display = 'flex';
 });
 
 document.getElementById('cancel-delete-btn').addEventListener('click', () => {
-    document.getElementById('delete-book-modal').style.display = 'none';
+    closeModalAction();
 });
 
 deleteBtn.addEventListener('mousedown', startDeleteHold);
@@ -821,9 +892,8 @@ let editSelectedTags = new Set();
 let editPreviewPages = [];
 let editPreviewCurrentPage = 0;
 
-document.getElementById('ctx-edit').addEventListener('click', () => {
-    if(!activeContextMenuMangaId) return;
-    
+function openEditMetadata(mangaId, pushState = true) {
+    activeContextMenuMangaId = mangaId;
     fetch(`/api/mangas/${activeContextMenuMangaId}/pages`)
         .then(res => res.json())
         .then(pages => {
@@ -847,11 +917,17 @@ document.getElementById('ctx-edit').addEventListener('click', () => {
     editSelectedTags.clear();
     renderEditPills();
     
+    if (pushState) pushModalState('edit', activeContextMenuMangaId);
     document.getElementById('edit-metadata-modal').style.display = 'flex';
+}
+
+document.getElementById('ctx-edit').addEventListener('click', () => {
+    if(!activeContextMenuMangaId) return;
+    openEditMetadata(activeContextMenuMangaId);
 });
 
 document.getElementById('cancel-edit-btn').addEventListener('click', () => {
-    document.getElementById('edit-metadata-modal').style.display = 'none';
+    closeModalAction();
 });
 
 function renderEditPreview() {
