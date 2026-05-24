@@ -115,7 +115,7 @@ function loadLibrary() {
     if (exclude.length > 0) url += `&exclude=${encodeURIComponent(exclude.join(','))}`;
 
     const toggleBtn = document.getElementById('toggle-filter-btn');
-    if (favFilter || readFilter || unreadFilter || artistFilter || includeAll.length > 0 || includeAny.length > 0 || exclude.length > 0 || checkedTagGroups.length > 0) {
+    if (favFilter || readFilter || unreadFilter || artistFilter || includeAll.length > 0 || includeAny.length > 0 || exclude.length > 0 || checkedTagGroups.length > 0 || excludedTagGroups.length > 0) {
         toggleBtn.classList.add('filter-active');
     } else {
         toggleBtn.classList.remove('filter-active');
@@ -256,7 +256,21 @@ fetch('/api/management/artists').then(res => res.json()).then(data => {
     data.standalone.forEach(a => {
         select.innerHTML += `<option value="artist_${a.id}">${a.primaryName}</option>`;
     });
-    select.addEventListener('change', () => { currentPage = 1; loadLibrary(); });
+    select.addEventListener('change', () => {
+        const clearBtn = document.getElementById('clear-artist-btn');
+        if (clearBtn) clearBtn.style.display = select.value ? 'block' : 'none';
+        currentPage = 1; 
+        loadLibrary(); 
+    });
+    const clearBtn = document.getElementById('clear-artist-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            select.value = '';
+            clearBtn.style.display = 'none';
+            currentPage = 1;
+            loadLibrary();
+        });
+    }
 });
 
 function searchArtist(name) {
@@ -998,6 +1012,31 @@ document.getElementById('ctx-regen-thumb').addEventListener('click', () => {
 document.getElementById('ctx-edit').addEventListener('click', () => {
     if(!activeContextMenuMangaId) return;
     openEditMetadata(activeContextMenuMangaId);
+});
+
+document.getElementById('ctx-mark-cg').addEventListener('click', () => {
+    if(!activeContextMenuMangaId) return;
+    const mangaId = activeContextMenuMangaId;
+    fetch(`/api/mangas/${mangaId}`)
+        .then(res => res.json())
+        .then(manga => {
+            const tags = new Set(manga.tags || []);
+            tags.add('CG');
+            return fetch(`/api/mangas/${mangaId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: manga.title,
+                    artist: manga.artist,
+                    tags: Array.from(tags)
+                })
+            });
+        })
+        .then(() => {
+            showToast('Marked tag as CG');
+            loadLibrary();
+        })
+        .catch(err => showError(err.message));
 });
 
 document.getElementById('cancel-edit-btn').addEventListener('click', () => {
