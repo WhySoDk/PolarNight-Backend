@@ -1162,7 +1162,7 @@ document.getElementById('save-reorder-btn').addEventListener('click', () => {
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) {
-            overlay.style.display = 'none';
+            closeModalAction();
         }
     });
 });
