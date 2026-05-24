@@ -15,6 +15,8 @@ object Mangas : IntIdTable() {
     val status = varchar("status", 50).default("PENDING") // PENDING or CONFIRMED
     val sequel = reference("sequel_id", Mangas).nullable()
     val createdAt = datetime("created_at").clientDefault { LocalDateTime.now() }
+    val isFavorite = bool("is_favorite").default(false)
+    val isRead = bool("is_read").default(false)
 }
 
 class Manga(id: EntityID<Int>) : IntEntity(id) {
@@ -27,6 +29,8 @@ class Manga(id: EntityID<Int>) : IntEntity(id) {
     var status by Mangas.status
     var sequel by Manga optionalReferencedOn Mangas.sequel
     var createdAt by Mangas.createdAt
+    var isFavorite by Mangas.isFavorite
+    var isRead by Mangas.isRead
     
     var tags by Tag via MangaTags
 }

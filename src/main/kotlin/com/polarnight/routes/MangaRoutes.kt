@@ -83,7 +83,9 @@ fun Route.mangaRoutes() {
                             "id" to it.id.value,
                             "title" to it.title,
                             "artist" to (it.artist?.group?.name ?: it.artist?.primaryName),
-                            "status" to it.status
+                            "status" to it.status,
+                            "isFavorite" to it.isFavorite,
+                            "isRead" to it.isRead
                         )
                     }
                 )
@@ -100,10 +102,32 @@ fun Route.mangaRoutes() {
                     "title" to manga.title,
                     "artist" to manga.artist?.primaryName,
                     "groupName" to manga.artist?.group?.name,
-                    "tags" to manga.tags.map { it.name }
+                    "tags" to manga.tags.map { it.name },
+                    "isFavorite" to manga.isFavorite,
+                    "isRead" to manga.isRead
                 )
             } ?: return@get call.respond(HttpStatusCode.NotFound)
             call.respond(mangaDetails)
+        }
+
+        put("/{id}/favorite") {
+            val id = call.parameters["id"]?.toIntOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest)
+            val req = call.receive<Map<String, Boolean>>()
+            val isFavorite = req["isFavorite"] ?: false
+            dbQuery {
+                Manga.findById(id)?.isFavorite = isFavorite
+            }
+            call.respond(HttpStatusCode.OK)
+        }
+
+        put("/{id}/read") {
+            val id = call.parameters["id"]?.toIntOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest)
+            val req = call.receive<Map<String, Boolean>>()
+            val isRead = req["isRead"] ?: false
+            dbQuery {
+                Manga.findById(id)?.isRead = isRead
+            }
+            call.respond(HttpStatusCode.OK)
         }
 
         get("/{id}/pages") {

@@ -106,10 +106,14 @@ function loadLibrary() {
             const grid = document.getElementById('manga-grid');
             grid.innerHTML = '';
             res.data.forEach(manga => {
+                const favClass = manga.isFavorite ? '' : 'inactive';
+                const readRibbon = manga.isRead ? '<div class="read-ribbon"></div>' : '';
                 grid.innerHTML += `
-                    <div class="manga-card" onclick="openReader(${manga.id})" oncontextmenu="showContextMenu(event, ${manga.id}, \`${manga.title.replace(/`/g, '\\`')}\`)">
-                        <img src="/api/mangas/${manga.id}/thumbnail?type=web" alt="${manga.title}">
-                        <div style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.7); padding:10px;">
+                    <div class="manga-card" oncontextmenu="showContextMenu(event, ${manga.id}, \`${manga.title.replace(/`/g, '\\`')}\`)">
+                        ${readRibbon}
+                        <div class="favorite-star ${favClass}" onclick="toggleFavorite(event, ${manga.id}, ${!manga.isFavorite})">★</div>
+                        <img src="/api/mangas/${manga.id}/thumbnail?type=web" alt="${manga.title}" onclick="openReader(${manga.id})">
+                        <div style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.7); padding:10px; pointer-events:none;">
                             <h4 style="font-size:0.9rem">${manga.title}</h4>
                             <small style="color:var(--text-muted)">${manga.artist || 'Unknown'}</small>
                         </div>
@@ -122,6 +126,15 @@ function loadLibrary() {
 }
 
 document.getElementById('prev-page').addEventListener('click', () => { if(currentPage > 1) { currentPage--; loadLibrary(); }});
+function toggleFavorite(e, id, isFavorite) {
+    e.stopPropagation();
+    fetch(`/api/mangas/${id}/favorite`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ isFavorite })
+    }).then(() => loadLibrary());
+}
+
 document.getElementById('next-page').addEventListener('click', () => { 
     const totalPages = parseInt(document.getElementById('total-pages-indicator').innerText);
     if(currentPage < totalPages) { currentPage++; loadLibrary(); }
@@ -673,6 +686,21 @@ const readerOverlay = document.getElementById('reader-overlay');
 const closeReader = document.querySelector('.close-reader');
 function openReader(mangaId) {
     readerOverlay.style.display = 'block';
+    readerOverlay.scrollTop = 0;
+    
+    readerOverlay.onscroll = () => {
+        if (readerOverlay.scrollTop + readerOverlay.clientHeight >= readerOverlay.scrollHeight - 100) {
+            if (!readerOverlay.dataset.readMarked || readerOverlay.dataset.readMarked !== mangaId.toString()) {
+                readerOverlay.dataset.readMarked = mangaId.toString();
+                fetch(`/api/mangas/${mangaId}/read`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ isRead: true })
+                }).then(() => loadLibrary());
+            }
+        }
+    };
+
     fetch(`/api/mangas/${mangaId}/pages`)
         .then(res => res.json())
         .then(pages => {
