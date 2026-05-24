@@ -225,7 +225,7 @@ fetch('/api/management/tags').then(res => res.json()).then(data => {
     let html = '';
     data.groups.forEach(g => {
         html += `<div style="display: flex; align-items: center; margin-top: 10px;">
-                    <input type="checkbox" value="group_${g.id}" data-type="group" style="margin-right: 5px;" title="Include">
+                    <input type="checkbox" value="group_${g.id}" data-type="group" class="include-checkbox" style="margin-right: 5px;" title="Include">
                     <input type="checkbox" value="group_${g.id}" data-type="group-exclude" class="exclude-checkbox" style="margin-right: 8px;" title="Exclude">
                     <label style="color: var(--primary-blue); font-weight: bold; margin: 0; cursor: pointer;">${g.name.toUpperCase()}</label>
                  </div>`;
@@ -234,7 +234,7 @@ fetch('/api/management/tags').then(res => res.json()).then(data => {
         html += `<h4 style="margin: 15px 0 5px 0; color: var(--primary-blue); font-size: 0.9em; text-transform: uppercase;">Standalone Tags</h4>`;
         data.standalone.forEach(t => {
             html += `<div style="display: flex; align-items: center; margin-top: 5px;">
-                        <input type="checkbox" value="${t.name}" data-type="tag" style="margin-right: 5px;" title="Include">
+                        <input type="checkbox" value="${t.name}" data-type="tag" class="include-checkbox" style="margin-right: 5px;" title="Include">
                         <input type="checkbox" value="${t.name}" data-type="tag-exclude" class="exclude-checkbox" style="margin-right: 8px;" title="Exclude">
                         <label style="margin: 0; cursor: pointer;">${t.name}</label>
                      </div>`;
@@ -979,6 +979,16 @@ function openEditMetadata(mangaId, pushState = true) {
     if (pushState) pushModalState('edit', activeContextMenuMangaId);
     document.getElementById('edit-metadata-modal').style.display = 'flex';
 }
+
+document.getElementById('ctx-regen-thumb').addEventListener('click', () => {
+    if(!activeContextMenuMangaId) return;
+    fetch(`/api/mangas/${activeContextMenuMangaId}/thumbnail/regenerate`, { method: 'POST' })
+        .then(() => {
+            showToast('Thumbnail regenerated');
+            loadLibrary();
+        })
+        .catch(err => showError(err.message));
+});
 
 document.getElementById('ctx-edit').addEventListener('click', () => {
     if(!activeContextMenuMangaId) return;

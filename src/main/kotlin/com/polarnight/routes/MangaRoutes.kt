@@ -292,6 +292,30 @@ fun Route.mangaRoutes() {
                 }
             }
 
+            // Regenerate thumbnail with the new first page
+            val firstPage = folder.listFiles()?.filter { it.isFile && it.extension.lowercase() in listOf("jpg", "jpeg", "png", "webp") }?.minByOrNull { it.name }
+            if (firstPage != null) {
+                dbQuery { Manga.findById(id)?.coverImage = firstPage.name }
+                val thumbnailDir = System.getenv("THUMBNAIL_DIR") ?: "/app/data/thumbnails"
+                ThumbnailService.generateThumbnails(id, firstPage.absolutePath, thumbnailDir)
+            }
+
+            call.respond(HttpStatusCode.OK)
+        }
+
+        post("/{id}/thumbnail/regenerate") {
+            val id = call.parameters["id"]?.toIntOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest)
+            val manga = dbQuery { Manga.findById(id) } ?: return@post call.respond(HttpStatusCode.NotFound)
+            val folder = File(manga.folderPath)
+            if (!folder.exists() || !folder.isDirectory) {
+                return@post call.respond(HttpStatusCode.NotFound)
+            }
+            val firstPage = folder.listFiles()?.filter { it.isFile && it.extension.lowercase() in listOf("jpg", "jpeg", "png", "webp") }?.minByOrNull { it.name }
+            if (firstPage != null) {
+                dbQuery { manga.coverImage = firstPage.name }
+                val thumbnailDir = System.getenv("THUMBNAIL_DIR") ?: "/app/data/thumbnails"
+                ThumbnailService.generateThumbnails(id, firstPage.absolutePath, thumbnailDir)
+            }
             call.respond(HttpStatusCode.OK)
         }
     }

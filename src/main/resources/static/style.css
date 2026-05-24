@@ -340,8 +340,9 @@ body {
 .context-menu li { padding: 10px 15px; cursor: pointer; border-radius: 6px; font-size: 0.9rem; transition: background 0.2s; }
 .context-menu li:hover { background: rgba(255,255,255,0.1); }
 
-/* Exclude Checkbox Styling */
-input[type="checkbox"].exclude-checkbox {
+/* Custom Checkbox Styling */
+input[type="checkbox"].exclude-checkbox,
+input[type="checkbox"].include-checkbox {
     appearance: none;
     -webkit-appearance: none;
     width: 13px;
@@ -358,6 +359,7 @@ input[type="checkbox"].exclude-checkbox {
     background: rgba(0, 0, 0, 0.2);
     transition: background 0.1s, border-color 0.1s;
 }
+
 input[type="checkbox"].exclude-checkbox:checked {
     background-color: var(--accent-red);
     border-color: var(--accent-red);
@@ -370,6 +372,18 @@ input[type="checkbox"].exclude-checkbox:checked::after {
     line-height: 1;
     font-family: monospace;
     transform: translateY(-1px);
+}
+
+input[type="checkbox"].include-checkbox:checked {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+}
+input[type="checkbox"].include-checkbox:checked::after {
+    content: "✓";
+    color: white;
+    font-weight: bold;
+    font-size: 10px;
+    line-height: 1;
 }
 
 /* Hold to Delete */
