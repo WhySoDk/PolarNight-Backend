@@ -173,44 +173,58 @@ body {
 
 .favorite-star {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    font-size: 1.5rem;
-    color: #ffd700;
+    top: 0;
+    right: 0;
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(to bottom left, #F59E0B 50%, transparent 50%);
+    font-size: 1.8rem;
+    color: white;
     text-shadow: 0 0 5px rgba(0,0,0,0.8);
     cursor: pointer;
     z-index: 10;
-    transition: transform 0.2s;
+    transition: filter 0.2s;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    padding: 5px 8px 0 0;
+    box-sizing: border-box;
 }
 .favorite-star:hover {
-    transform: scale(1.2);
+    filter: brightness(1.2);
 }
 .favorite-star.inactive {
-    color: rgba(255, 255, 255, 0.5);
-    text-shadow: 0 0 2px rgba(0,0,0,0.8);
+    background: linear-gradient(to bottom left, rgba(0, 0, 0, 0.4) 50%, transparent 50%);
+    color: rgba(255, 255, 255, 0.3);
+    text-shadow: none;
 }
 
 .read-ribbon {
     position: absolute;
     top: 0;
     left: 0;
-    width: 0;
-    height: 0;
-    border-top: 50px solid #10B981;
-    border-right: 50px solid transparent;
-    z-index: 9;
-    pointer-events: none;
-}
-.read-ribbon::before {
-    content: "READ";
-    position: absolute;
-    top: -40px;
-    left: 5px;
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(to bottom right, #10B981 50%, transparent 50%);
+    font-size: 1.4rem;
     color: white;
-    font-size: 0.7rem;
-    font-weight: bold;
-    transform: rotate(-45deg);
-    text-shadow: 0 0 3px rgba(0,0,0,0.5);
+    text-shadow: 0 0 5px rgba(0,0,0,0.8);
+    cursor: pointer;
+    z-index: 10;
+    transition: filter 0.2s;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 5px 0 0 8px;
+    box-sizing: border-box;
+}
+.read-ribbon:hover {
+    filter: brightness(1.2);
+}
+.read-ribbon.inactive {
+    background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.4) 50%, transparent 50%);
+    color: rgba(255, 255, 255, 0.3);
+    text-shadow: none;
 }
 
 .language-badges {

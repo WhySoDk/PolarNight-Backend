@@ -16,9 +16,12 @@ const limit = 24;
 document.getElementById('home-title').addEventListener('click', () => {
     document.getElementById('advanced-search-bar').value = '';
     document.getElementById('library-artist-filter').value = '';
+    document.getElementById('library-favorite-filter').checked = false;
+    document.getElementById('library-read-filter').checked = false;
+    document.getElementById('library-unread-filter').checked = false;
     document.querySelectorAll('#tag-checkbox-list input[type="checkbox"]').forEach(cb => cb.checked = false);
     currentPage = 1;
-    showTab('library');
+    switchTab('library');
     loadLibrary();
 });
 
@@ -44,10 +47,17 @@ function loadLibrary() {
     const search = document.getElementById('advanced-search-bar').value;
     const artistFilter = document.getElementById('library-artist-filter').value;
     const favFilter = document.getElementById('library-favorite-filter').checked;
+    const readFilter = document.getElementById('library-read-filter').checked;
+    const unreadFilter = document.getElementById('library-unread-filter').checked;
     let url = `/api/mangas?page=${currentPage}&limit=${limit}`;
     
     if (favFilter) {
         url += '&isFavorite=true';
+    }
+    if (readFilter) {
+        url += '&isRead=true';
+    } else if (unreadFilter) {
+        url += '&isRead=false';
     }
     
     if (artistFilter) {
@@ -67,6 +77,12 @@ function loadLibrary() {
 
     const checkedTagGroups = Array.from(document.querySelectorAll('#tag-checkbox-list input[data-type="group"]:checked')).map(cb => cb.value.split('_')[1]);
     if (checkedTagGroups.length > 0) url += `&tagGroups=${checkedTagGroups.join(',')}`;
+
+    const excludedTags = Array.from(document.querySelectorAll('#tag-checkbox-list input[data-type="tag-exclude"]:checked')).map(cb => cb.value);
+    exclude.push(...excludedTags);
+
+    const excludedTagGroups = Array.from(document.querySelectorAll('#tag-checkbox-list input[data-type="group-exclude"]:checked')).map(cb => cb.value.split('_')[1]);
+    if (excludedTagGroups.length > 0) url += `&excludeTagGroups=${excludedTagGroups.join(',')}`;
 
     if (search.trim() !== '') {
         const notMatches = search.match(/(?:NOT\s+|-)(?:\[(.*?)\]|(\w+))/gi) || [];
@@ -99,7 +115,7 @@ function loadLibrary() {
     if (exclude.length > 0) url += `&exclude=${encodeURIComponent(exclude.join(','))}`;
 
     const toggleBtn = document.getElementById('toggle-filter-btn');
-    if (favFilter || artistFilter || includeAll.length > 0 || includeAny.length > 0 || exclude.length > 0 || checkedTagGroups.length > 0) {
+    if (favFilter || readFilter || unreadFilter || artistFilter || includeAll.length > 0 || includeAny.length > 0 || exclude.length > 0 || checkedTagGroups.length > 0) {
         toggleBtn.classList.add('filter-active');
     } else {
         toggleBtn.classList.remove('filter-active');
@@ -112,11 +128,11 @@ function loadLibrary() {
             grid.innerHTML = '';
             res.data.forEach(manga => {
                 const favClass = manga.isFavorite ? '' : 'inactive';
-                const readRibbon = manga.isRead ? '<div class="read-ribbon"></div>' : '';
+                const readClass = manga.isRead ? '' : 'inactive';
+                const readRibbon = `<div class="read-ribbon ${readClass}" onclick="toggleRead(event, ${manga.id}, ${!manga.isRead})">✓</div>`;
                 let langBadges = '';
                 if (manga.languages && manga.languages.length > 0) {
-                    const langTop = manga.isRead ? '35px' : '5px';
-                    langBadges = `<div class="language-badges" style="top: ${langTop};">` + manga.languages.map(l => `<div class="language-badge">${l}</div>`).join('') + `</div>`;
+                    langBadges = `<div class="language-badges" style="top: 45px;">` + manga.languages.map(l => `<div class="language-badge">${l}</div>`).join('') + `</div>`;
                 }
                 grid.innerHTML += `
                     <div class="manga-card" oncontextmenu="showContextMenu(event, ${manga.id}, \`${manga.title.replace(/`/g, '\\`')}\`)">
@@ -143,6 +159,15 @@ function toggleFavorite(e, id, isFavorite) {
         method: 'PUT',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ isFavorite })
+    }).then(() => loadLibrary());
+}
+
+function toggleRead(e, id, isRead) {
+    e.stopPropagation();
+    fetch(`/api/mangas/${id}/read`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ isRead })
     }).then(() => loadLibrary());
 }
 
@@ -183,18 +208,34 @@ document.getElementById('library-favorite-filter').addEventListener('change', ()
     currentPage = 1;
     loadLibrary();
 });
+document.getElementById('library-read-filter').addEventListener('change', (e) => {
+    if(e.target.checked) document.getElementById('library-unread-filter').checked = false;
+    currentPage = 1;
+    loadLibrary();
+});
+document.getElementById('library-unread-filter').addEventListener('change', (e) => {
+    if(e.target.checked) document.getElementById('library-read-filter').checked = false;
+    currentPage = 1;
+    loadLibrary();
+});
 
 // Populate Tag Sidebar
 fetch('/api/management/tags').then(res => res.json()).then(data => {
     const list = document.getElementById('tag-checkbox-list');
     let html = '';
     data.groups.forEach(g => {
-        html += `<label style="color: var(--primary-blue); font-weight: bold; margin-top: 10px;"><input type="checkbox" value="group_${g.id}" data-type="group"> ${g.name.toUpperCase()}</label>`;
+        html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                    <label style="color: var(--primary-blue); font-weight: bold;"><input type="checkbox" value="group_${g.id}" data-type="group"> ${g.name.toUpperCase()}</label>
+                    <label style="color: var(--accent-red); font-size: 0.8em;" title="Exclude"><input type="checkbox" value="group_${g.id}" data-type="group-exclude"> NOT</label>
+                 </div>`;
     });
     if(data.standalone.length > 0) {
         html += `<h4 style="margin: 15px 0 5px 0; color: var(--primary-blue); font-size: 0.9em; text-transform: uppercase;">Standalone Tags</h4>`;
         data.standalone.forEach(t => {
-            html += `<label><input type="checkbox" value="${t.name}"> ${t.name}</label>`;
+            html += `<div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label><input type="checkbox" value="${t.name}" data-type="tag"> ${t.name}</label>
+                        <label style="color: var(--accent-red); font-size: 0.8em;" title="Exclude"><input type="checkbox" value="${t.name}" data-type="tag-exclude"> NOT</label>
+                     </div>`;
         });
     }
     list.innerHTML = html;

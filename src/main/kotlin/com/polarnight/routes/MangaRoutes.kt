@@ -27,9 +27,11 @@ fun Route.mangaRoutes() {
             val includeAny = call.request.queryParameters["includeAny"]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
             val exclude = call.request.queryParameters["exclude"]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
             val tagGroupsFilter = call.request.queryParameters["tagGroups"]?.split(",")?.mapNotNull { it.toIntOrNull() } ?: emptyList()
+            val excludeTagGroupsFilter = call.request.queryParameters["excludeTagGroups"]?.split(",")?.mapNotNull { it.toIntOrNull() } ?: emptyList()
             val artistIdFilter = call.request.queryParameters["artistId"]?.toIntOrNull()
             val groupIdFilter = call.request.queryParameters["groupId"]?.toIntOrNull()
             val isFavoriteFilter = call.request.queryParameters["isFavorite"]?.toBoolean() ?: false
+            val isReadFilter = call.request.queryParameters["isRead"]?.toBoolean()
             val searchQuery = call.request.queryParameters["search"]?.trim()
 
             val response = dbQuery {
@@ -54,8 +56,11 @@ fun Route.mangaRoutes() {
                 if (isFavoriteFilter) {
                     mangas = mangas.filter { it.isFavorite }
                 }
+                if (isReadFilter != null) {
+                    mangas = mangas.filter { it.isRead == isReadFilter }
+                }
 
-                if (includeAll.isNotEmpty() || includeAny.isNotEmpty() || exclude.isNotEmpty() || tagGroupsFilter.isNotEmpty()) {
+                if (includeAll.isNotEmpty() || includeAny.isNotEmpty() || exclude.isNotEmpty() || tagGroupsFilter.isNotEmpty() || excludeTagGroupsFilter.isNotEmpty()) {
                     mangas = mangas.filter { manga ->
                         val mangaTags = manga.tags.map { it.name.lowercase() }.toMutableList()
                         manga.artist?.primaryName?.let { mangaTags.add(it.lowercase()) }
@@ -69,7 +74,11 @@ fun Route.mangaRoutes() {
                             manga.tags.any { it.group?.id?.value == groupId }
                         }
                         
-                        hasAll && hasAny && hasNone && hasTagGroups
+                        val hasNoExcludedTagGroups = excludeTagGroupsFilter.isEmpty() || excludeTagGroupsFilter.none { groupId ->
+                            manga.tags.any { it.group?.id?.value == groupId }
+                        }
+                        
+                        hasAll && hasAny && hasNone && hasTagGroups && hasNoExcludedTagGroups
                     }
                 }
                 
