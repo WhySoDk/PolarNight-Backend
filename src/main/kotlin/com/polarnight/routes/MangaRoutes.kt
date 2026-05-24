@@ -297,7 +297,7 @@ fun Route.mangaRoutes() {
             if (firstPage != null) {
                 dbQuery { Manga.findById(id)?.coverImage = firstPage.name }
                 val thumbnailDir = System.getenv("THUMBNAIL_DIR") ?: "/app/data/thumbnails"
-                ThumbnailService.generateThumbnails(id, firstPage.absolutePath, thumbnailDir)
+                ThumbnailService.generateThumbnails(id, firstPage.absolutePath, thumbnailDir, force = true)
             }
 
             call.respond(HttpStatusCode.OK)
@@ -314,7 +314,7 @@ fun Route.mangaRoutes() {
             if (firstPage != null) {
                 dbQuery { manga.coverImage = firstPage.name }
                 val thumbnailDir = System.getenv("THUMBNAIL_DIR") ?: "/app/data/thumbnails"
-                ThumbnailService.generateThumbnails(id, firstPage.absolutePath, thumbnailDir)
+                ThumbnailService.generateThumbnails(id, firstPage.absolutePath, thumbnailDir, force = true)
             }
             call.respond(HttpStatusCode.OK)
         }

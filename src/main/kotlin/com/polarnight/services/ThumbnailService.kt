@@ -5,7 +5,7 @@ import java.io.File
 
 object ThumbnailService {
     
-    fun generateThumbnails(mangaId: Int, coverImagePath: String, thumbnailDir: String) {
+    fun generateThumbnails(mangaId: Int, coverImagePath: String, thumbnailDir: String, force: Boolean = false) {
         val sourceFile = File(coverImagePath)
         if (!sourceFile.exists()) return
 
@@ -16,7 +16,8 @@ object ThumbnailService {
         val einkThumb = File(outDir, "eink.jpg")
 
         // Generate High-Quality Web Thumbnail
-        if (!webThumb.exists()) {
+        if (force || !webThumb.exists()) {
+            if (force && webThumb.exists()) webThumb.delete()
             Thumbnails.of(sourceFile)
                 .size(400, 600)
                 .outputFormat("jpg")
@@ -25,7 +26,8 @@ object ThumbnailService {
         }
 
         // Generate Heavily Compressed E-Ink Thumbnail
-        if (!einkThumb.exists()) {
+        if (force || !einkThumb.exists()) {
+            if (force && einkThumb.exists()) einkThumb.delete()
             Thumbnails.of(sourceFile)
                 .size(300, 450)
                 .outputFormat("jpg")

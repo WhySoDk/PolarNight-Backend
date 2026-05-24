@@ -134,12 +134,13 @@ function loadLibrary() {
                 if (manga.languages && manga.languages.length > 0) {
                     langBadges = `<div class="language-badges" style="top: 45px;">` + manga.languages.map(l => `<div class="language-badge">${l}</div>`).join('') + `</div>`;
                 }
+                const cb = window.thumbnailCacheBust && window.thumbnailCacheBust[manga.id] ? `&cb=${window.thumbnailCacheBust[manga.id]}` : '';
                 grid.innerHTML += `
                     <div class="manga-card" oncontextmenu="showContextMenu(event, ${manga.id}, \`${manga.title.replace(/`/g, '\\`')}\`)">
                         ${readRibbon}
                         ${langBadges}
                         <div class="favorite-star ${favClass}" onclick="toggleFavorite(event, ${manga.id}, ${!manga.isFavorite})">★</div>
-                        <img src="/api/mangas/${manga.id}/thumbnail?type=web" alt="${manga.title}" onclick="openReader(${manga.id})">
+                        <img src="/api/mangas/${manga.id}/thumbnail?type=web${cb}" alt="${manga.title}" onclick="openReader(${manga.id})">
                         <div style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.7); padding:10px; pointer-events:none;">
                             <h4 style="font-size:0.9rem">${manga.title}</h4>
                             <small style="color:var(--text-muted)">${manga.artist || 'Unknown'}</small>
@@ -857,10 +858,12 @@ function openReader(mangaId, pushState = true) {
                         ${artistStr ? `<button class="btn btn-primary" onclick="searchArtist('${artistStr.replace(/'/g, "\\'")}')">Show More</button>` : ''}
                     </div>`;
                     if (related.sequel) {
-                        grid.innerHTML += `<div class="related-manga-card" onclick="openReader(${related.sequel.id})"><img src="/api/mangas/${related.sequel.id}/thumbnail?type=web"><h4>Sequel: ${related.sequel.title}</h4></div>`;
+                        const cb = window.thumbnailCacheBust && window.thumbnailCacheBust[related.sequel.id] ? `&cb=${window.thumbnailCacheBust[related.sequel.id]}` : '';
+                        grid.innerHTML += `<div class="related-manga-card" onclick="openReader(${related.sequel.id})"><img src="/api/mangas/${related.sequel.id}/thumbnail?type=web${cb}"><h4>Sequel: ${related.sequel.title}</h4></div>`;
                     }
                     related.otherWorks.forEach(w => {
-                        grid.innerHTML += `<div class="related-manga-card" onclick="openReader(${w.id})"><img src="/api/mangas/${w.id}/thumbnail?type=web"><h4>${w.title}</h4></div>`;
+                        const cb = window.thumbnailCacheBust && window.thumbnailCacheBust[w.id] ? `&cb=${window.thumbnailCacheBust[w.id]}` : '';
+                        grid.innerHTML += `<div class="related-manga-card" onclick="openReader(${w.id})"><img src="/api/mangas/${w.id}/thumbnail?type=web${cb}"><h4>${w.title}</h4></div>`;
                     });
                 });
         })
@@ -980,11 +983,13 @@ function openEditMetadata(mangaId, pushState = true) {
     document.getElementById('edit-metadata-modal').style.display = 'flex';
 }
 
+window.thumbnailCacheBust = window.thumbnailCacheBust || {};
 document.getElementById('ctx-regen-thumb').addEventListener('click', () => {
     if(!activeContextMenuMangaId) return;
     fetch(`/api/mangas/${activeContextMenuMangaId}/thumbnail/regenerate`, { method: 'POST' })
         .then(() => {
             showToast('Thumbnail regenerated');
+            window.thumbnailCacheBust[activeContextMenuMangaId] = new Date().getTime();
             loadLibrary();
         })
         .catch(err => showError(err.message));
@@ -1173,6 +1178,8 @@ document.getElementById('save-reorder-btn').addEventListener('click', () => {
         body: JSON.stringify({ newOrder, deletedPages: pendingDeletedPages })
     }).then(() => {
         showToast('Pages reordered successfully!');
+        window.thumbnailCacheBust = window.thumbnailCacheBust || {};
+        window.thumbnailCacheBust[activeContextMenuMangaId] = new Date().getTime();
         closeModalAction();
     }).catch(err => showError(err.message));
 });

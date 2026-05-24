@@ -6,7 +6,7 @@
     <title>PolarNight Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Danfo&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/style.css?v=2.22">
+    <link rel="stylesheet" href="/style.css?v=2.24">
 </head>
 <body>
     <!-- Sliding Filter Sidebar -->
@@ -280,7 +280,7 @@
 
     <!-- Hold to Delete Modal -->
     <div class="modal-overlay" id="delete-book-modal" style="z-index: 150;">
-        <div class="modal glass-panel" style="width: 400px; text-align: center;">
+        <div class="modal glass-panel delete-modal">
             <h3 style="color: #f87171;">Delete Book?</h3>
             <p style="margin: 15px 0; color: var(--text-muted);">This will permanently delete the folder and all pages.</p>
             <div class="modal-actions" style="justify-content: center; flex-direction: column;">
@@ -295,7 +295,7 @@
 
     <!-- Edit Metadata Modal (Wider Layout) -->
     <div class="modal-overlay" id="edit-metadata-modal" style="z-index: 150;">
-        <div class="modal glass-panel" style="width: 800px; max-width: 90vw; display: flex; flex-direction: row; padding: 0; height: 80vh;">
+        <div class="modal glass-panel edit-metadata-modal-content">
             <!-- Left Side: Preview -->
             <div class="edit-preview-wrapper">
                 <div class="edit-preview-container" id="edit-preview-container">
@@ -308,7 +308,7 @@
             </div>
             
             <!-- Right Side: Form -->
-            <div style="flex: 1; padding: 30px; display: flex; flex-direction: column; overflow-y: auto;">
+            <div class="edit-form-wrapper">
                 <h2>Edit Metadata</h2>
                 <div class="form-group">
                     <label>Title</label>
@@ -356,6 +356,6 @@
     <!-- Error Toast Notification -->
     <div id="error-toast" class="error-toast glass-panel"></div>
 
-    <script src="/app.js?v=2.22"></script>
+    <script src="/app.js?v=2.24"></script>
 </body>
 </html>
