@@ -149,6 +149,9 @@ function loadLibrary() {
             });
             document.getElementById('jump-page-input').value = res.page;
             document.getElementById('total-pages-indicator').innerText = res.totalPages;
+            
+            const contentArea = document.querySelector('.content-area');
+            if (contentArea) contentArea.scrollTop = 0;
         })
         .catch(err => showError("Failed to load library: " + err.message));
 }
