@@ -639,6 +639,17 @@ document.getElementById('run-migration-btn').addEventListener('click', () => {
         });
 });
 
+function fixBookNames() {
+    fetch('/api/management/fix-book-names', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            showToast(data.message || `Fixed ${data.fixed} book names.`);
+            loadManagement();
+            loadLibrary(); // Reload library if names changed
+        })
+        .catch(err => showError("Failed to fix book names: " + err.message));
+}
+
 // Management Logic
 function loadManagement() {
     fetch('/api/management/tags').then(res => res.json()).then(data => {

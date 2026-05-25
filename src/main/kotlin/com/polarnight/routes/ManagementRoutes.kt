@@ -27,6 +27,20 @@ fun Route.managementRoutes() {
             call.respond(result)
         }
 
+        // Fix Book Names
+        post("/fix-book-names") {
+            var fixedCount = 0
+            dbQuery {
+                Manga.all().forEach { manga ->
+                    if (manga.title.startsWith("]")) {
+                        manga.title = manga.title.removePrefix("]").trim()
+                        fixedCount++
+                    }
+                }
+            }
+            call.respond(mapOf("fixed" to fixedCount, "message" to "Fixed $fixedCount book names."))
+        }
+
         // Tags
         get("/tags") {
             val data = dbQuery {
