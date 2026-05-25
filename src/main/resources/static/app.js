@@ -242,7 +242,16 @@ fetch('/api/management/tags').then(res => res.json()).then(data => {
         });
     }
     list.innerHTML = html;
-    list.querySelectorAll('input').forEach(cb => cb.addEventListener('change', () => { currentPage = 1; loadLibrary(); }));
+    list.querySelectorAll('input').forEach(cb => cb.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            const isExclude = e.target.classList.contains('exclude-checkbox');
+            const siblingClass = isExclude ? '.include-checkbox' : '.exclude-checkbox';
+            const sibling = e.target.parentElement.querySelector(siblingClass);
+            if (sibling) sibling.checked = false;
+        }
+        currentPage = 1;
+        loadLibrary();
+    }));
 });
 
 // Populate Artist Filter Sidebar
