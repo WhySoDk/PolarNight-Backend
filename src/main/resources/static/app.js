@@ -226,29 +226,30 @@ fetch('/api/management/tags').then(res => res.json()).then(data => {
     let html = '';
     data.groups.forEach(g => {
         html += `<div style="display: flex; align-items: center; margin-top: 10px;">
-                    <input type="checkbox" value="group_${g.id}" data-type="group" class="include-checkbox" style="margin-right: 5px;" title="Include">
-                    <input type="checkbox" value="group_${g.id}" data-type="group-exclude" class="exclude-checkbox" style="margin-right: 8px;" title="Exclude">
-                    <label style="color: var(--primary-blue); font-weight: bold; margin: 0; cursor: pointer;">${g.name.toUpperCase()}</label>
+                    <input type="checkbox" id="include-group-${g.id}" value="group_${g.id}" data-type="group" class="include-checkbox" style="margin-right: 5px;" title="Include">
+                    <input type="checkbox" id="exclude-group-${g.id}" value="group_${g.id}" data-type="group-exclude" class="exclude-checkbox" style="margin-right: 8px;" title="Exclude">
+                    <label for="include-group-${g.id}" style="color: var(--primary-blue); font-weight: bold; margin: 0; cursor: pointer;">${g.name.toUpperCase()}</label>
                  </div>`;
     });
     if(data.standalone.length > 0) {
         html += `<h4 style="margin: 15px 0 5px 0; color: var(--primary-blue); font-size: 0.9em; text-transform: uppercase;">Standalone Tags</h4>`;
         data.standalone.forEach(t => {
+            const safeName = t.name.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
             html += `<div style="display: flex; align-items: center; margin-top: 5px;">
-                        <input type="checkbox" value="${t.name}" data-type="tag" class="include-checkbox" style="margin-right: 5px;" title="Include">
-                        <input type="checkbox" value="${t.name}" data-type="tag-exclude" class="exclude-checkbox" style="margin-right: 8px;" title="Exclude">
-                        <label style="margin: 0; cursor: pointer;">${t.name}</label>
+                        <input type="checkbox" id="include-tag-${safeName}" value="${t.name}" data-type="tag" class="include-checkbox" style="margin-right: 5px;" title="Include">
+                        <input type="checkbox" id="exclude-tag-${safeName}" value="${t.name}" data-type="tag-exclude" class="exclude-checkbox" style="margin-right: 8px;" title="Exclude">
+                        <label for="include-tag-${safeName}" style="margin: 0; cursor: pointer;">${t.name}</label>
                      </div>`;
         });
     }
     list.innerHTML = html;
-    list.querySelectorAll('input').forEach(cb => cb.addEventListener('change', (e) => {
-        if (e.target.checked) {
-            const isExclude = e.target.classList.contains('exclude-checkbox');
-            const siblingClass = isExclude ? '.include-checkbox' : '.exclude-checkbox';
-            const sibling = e.target.parentElement.querySelector(siblingClass);
-            if (sibling) sibling.checked = false;
-        }
+    list.querySelectorAll('.include-checkbox').forEach(cb => cb.addEventListener('change', (e) => {
+        if (e.target.checked) document.getElementById(e.target.id.replace('include', 'exclude')).checked = false;
+        currentPage = 1;
+        loadLibrary();
+    }));
+    list.querySelectorAll('.exclude-checkbox').forEach(cb => cb.addEventListener('change', (e) => {
+        if (e.target.checked) document.getElementById(e.target.id.replace('exclude', 'include')).checked = false;
         currentPage = 1;
         loadLibrary();
     }));
