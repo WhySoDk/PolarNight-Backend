@@ -326,12 +326,12 @@ function switchTab(tab, pushState = true) {
     if (tab === 'library') {
         document.getElementById('library-view').classList.add('active');
         document.querySelector('.bottom-floating-container').style.display = 'flex';
-        if (searchContainer) searchContainer.style.display = 'flex';
-        if (filterBtn) filterBtn.style.display = 'flex';
+        if (searchContainer) searchContainer.style.visibility = 'visible';
+        if (filterBtn) filterBtn.style.visibility = 'visible';
     } else {
         document.querySelector('.bottom-floating-container').style.display = 'none';
-        if (searchContainer) searchContainer.style.display = 'none';
-        if (filterBtn) filterBtn.style.display = 'none';
+        if (searchContainer) searchContainer.style.visibility = 'hidden';
+        if (filterBtn) filterBtn.style.visibility = 'hidden';
         if (tab === 'upload') document.getElementById('upload-view').classList.add('active');
         else if (tab === 'migration') document.getElementById('migration-view').classList.add('active');
         else if (tab === 'management') {
@@ -864,6 +864,18 @@ function openReader(mangaId, pushState = true) {
     fetch(`/api/mangas/${mangaId}/pages`)
         .then(res => res.json())
         .then(pages => {
+            // Also fetch title for the header
+            fetch(`/api/mangas/${mangaId}`)
+                .then(r => r.json())
+                .then(manga => {
+                    const titleEl = document.getElementById('reader-title');
+                    if (titleEl) titleEl.innerText = manga.title || 'Unknown Title';
+                })
+                .catch(() => {
+                    const titleEl = document.getElementById('reader-title');
+                    if (titleEl) titleEl.innerText = '';
+                });
+
             const container = document.getElementById('reader-scroll-container');
             container.innerHTML = '';
             pages.forEach(page => {
