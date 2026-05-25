@@ -98,9 +98,9 @@ fun Route.mangaRoutes() {
                             val gName = t.group?.name?.lowercase()
                             if (listOf("th", "thai", "ไทย").any { l -> tName == l || gName == l }) langs.add("TH")
                             if (listOf("en", "eng", "english").any { l -> tName == l || gName == l }) langs.add("EN")
-                            if (listOf("jp", "jpn", "japan").any { l -> tName == l || gName == l }) langs.add("JP")
-                            if (listOf("cn", "china").any { l -> tName == l || gName == l }) langs.add("CN")
-                            if (listOf("kr", "korean", "kn").any { l -> tName == l || gName == l }) langs.add("KR")
+                            if (listOf("jp", "jpn", "japan", "japanese", "日本語").any { l -> tName == l || gName == l }) langs.add("JP")
+                            if (listOf("cn", "china", "chinese", "中文").any { l -> tName == l || gName == l }) langs.add("CN")
+                            if (listOf("kr", "korean", "kn", "한국어").any { l -> tName == l || gName == l }) langs.add("KR")
                         }
 
                         mapOf(
@@ -126,8 +126,11 @@ fun Route.mangaRoutes() {
                     "id" to manga.id.value,
                     "title" to manga.title,
                     "artist" to manga.artist?.primaryName,
+                    "artistId" to manga.artist?.id?.value,
                     "groupName" to manga.artist?.group?.name,
+                    "groupId" to manga.artist?.group?.id?.value,
                     "tags" to manga.tags.map { it.name },
+                    "tagsDetailed" to manga.tags.map { mapOf("name" to it.name, "groupId" to it.group?.id?.value) },
                     "isFavorite" to manga.isFavorite,
                     "isRead" to manga.isRead
                 )

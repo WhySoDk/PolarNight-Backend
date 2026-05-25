@@ -884,10 +884,79 @@ function openReader(mangaId, pushState = true) {
                 .then(manga => {
                     const titleEl = document.getElementById('reader-title');
                     if (titleEl) titleEl.innerText = manga.title || 'Unknown Title';
+                    
+                    const metaEl = document.getElementById('reader-meta');
+                    if (metaEl) {
+                        metaEl.innerHTML = '';
+                        
+                        const artistStr = manga.groupName || manga.artist;
+                        if (artistStr) {
+                            const artistPill = document.createElement('span');
+                            artistPill.className = 'pill';
+                            artistPill.style.cursor = 'pointer';
+                            artistPill.style.background = 'var(--primary, rgba(64, 112, 219, 0.4))';
+                            artistPill.innerText = artistStr;
+                            artistPill.onclick = () => {
+                                closeModalAction();
+                                document.getElementById('advanced-search-bar').value = '';
+                                document.querySelectorAll('#tag-checkbox-list input[type="checkbox"]').forEach(cb => cb.checked = false);
+                                
+                                if (manga.groupId) {
+                                    document.getElementById('library-artist-filter').value = `group_${manga.groupId}`;
+                                } else if (manga.artistId) {
+                                    document.getElementById('library-artist-filter').value = `artist_${manga.artistId}`;
+                                } else {
+                                    document.getElementById('library-artist-filter').value = '';
+                                    document.getElementById('advanced-search-bar').value = artistStr;
+                                }
+                                
+                                const clearBtn = document.getElementById('clear-artist-btn');
+                                if (clearBtn) clearBtn.style.display = document.getElementById('library-artist-filter').value ? 'block' : 'none';
+                                
+                                currentPage = 1;
+                                loadLibrary();
+                            };
+                            metaEl.appendChild(artistPill);
+                        }
+                        
+                        if (manga.tagsDetailed) {
+                            manga.tagsDetailed.forEach(tag => {
+                                const tagPill = document.createElement('span');
+                                tagPill.className = 'pill';
+                                tagPill.style.cursor = 'pointer';
+                                tagPill.innerText = tag.name;
+                                tagPill.onclick = () => {
+                                    closeModalAction();
+                                    document.getElementById('advanced-search-bar').value = '';
+                                    document.getElementById('library-artist-filter').value = '';
+                                    const clearBtn = document.getElementById('clear-artist-btn');
+                                    if (clearBtn) clearBtn.style.display = 'none';
+                                    
+                                    document.querySelectorAll('#tag-checkbox-list input[type="checkbox"]').forEach(cb => cb.checked = false);
+                                    
+                                    if (tag.groupId) {
+                                        const cb = document.querySelector(`#tag-checkbox-list input[data-type="group"][value="group_${tag.groupId}"]`);
+                                        if (cb) cb.checked = true;
+                                        else document.getElementById('advanced-search-bar').value = tag.name;
+                                    } else {
+                                        const cb = document.querySelector(`#tag-checkbox-list input[data-type="tag"][value="${tag.name}"]`);
+                                        if (cb) cb.checked = true;
+                                        else document.getElementById('advanced-search-bar').value = tag.name;
+                                    }
+                                    
+                                    currentPage = 1;
+                                    loadLibrary();
+                                };
+                                metaEl.appendChild(tagPill);
+                            });
+                        }
+                    }
                 })
                 .catch(() => {
                     const titleEl = document.getElementById('reader-title');
                     if (titleEl) titleEl.innerText = '';
+                    const metaEl = document.getElementById('reader-meta');
+                    if (metaEl) metaEl.innerHTML = '';
                 });
 
             const container = document.getElementById('reader-scroll-container');

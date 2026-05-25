@@ -237,13 +237,16 @@ body {
     pointer-events: none;
 }
 .language-badge {
-    background: rgba(0, 0, 0, 0.7);
+    background: var(--glass-bg, rgba(16, 28, 54, 0.6));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border, rgba(64, 112, 219, 0.2));
     color: #fff;
-    font-size: 0.7rem;
+    font-size: 0.9rem;
     font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 4px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    padding: 3px 8px;
+    border-radius: 6px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
     text-transform: uppercase;
 }
 
